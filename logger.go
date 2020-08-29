@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,17 +23,20 @@ type ErrorType int
 // ErrorType enum .
 const (
 	GLFWInitError ErrorType = iota + 1
-	GLInitError
 	GLFWCreateWindowError
+	GLInitError
+	GLCompileShaderrError
 )
 
 // FatalError logs.
-func (l *SimpleLogger) FatalError(e ErrorType, err error) {
+func (l *SimpleLogger) FatalError(e ErrorType, err error) int {
 	errorMessages := map[ErrorType]string{
 		GLFWInitError:         "could not initialize GLFW",
-		GLInitError:           "could not initialize OpenGL",
 		GLFWCreateWindowError: "could not create window",
+		GLInitError:           "could not initialize OpenGL",
+		GLCompileShaderrError: "could not compile shader",
 	}
 	l.Errorf(errorMessages[e]+": %s", err)
-	os.Exit(int(e))
+
+	return int(e)
 }

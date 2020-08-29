@@ -4,14 +4,27 @@ Let's have fun with OpenGL in GO.
 
 ## Setup
 
-Install OpenGL and GLFW
+GLFW Depencies: <https://github.com/go-gl/glfw#installation>
+
+On windows, install a cgo compiler (Ex: TDM-GCC)
 
 ```bash
-# GLFW dependencies (Ubuntu on WSL2)
-# See here fore details: https://github.com/go-gl/glfw#installation
-sudo apt-get update
-sudo apt-get install libgl1-mesa-dev xorg-dev
+tdm64-gcc-9.2.0.exe from: https://jmeubank.github.io/tdm-gcc/
+```
 
+Install OpenGL and GLFW cgo binding libraries
+
+```bash
 go get -u github.com/go-gl/gl/v4.6-core/gl
 go get -u github.com/go-gl/glfw/v3.3/glfw
+```
+
+## Build
+
+Build the project
+
+```bash
+git clone git@github.com:devodev/opengl-experimentation.git
+cd opengl-experimentation
+go build .
 ```
