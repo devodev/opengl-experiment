@@ -67,12 +67,16 @@ func main() {
 		-0.5, 0.5, 0, // top-left
 		-0.5, -0.5, 0, // bottom-left
 		0.5, -0.5, 0, // bottom-right
-
-		-0.5, 0.5, 0, // top-left
 		0.5, 0.5, 0, // top-right
-		0.5, -0.5, 0, // bottom-right
 	}
-	vao := makeVao(square)
+	squareIndices := []uint32{
+		0, 1, 2,
+		0, 3, 2,
+	}
+	vao := makeVao(square, squareIndices)
+
+	// draw wireframes
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
 	// start event loop
 	for !window.ShouldClose() {
