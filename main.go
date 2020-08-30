@@ -60,12 +60,12 @@ func main() {
 	})
 
 	// create a program with default shaders
-	vertexShaderSource, err := ioutil.ReadFile("assets/shaders/defaultVertex.glsl")
+	vertexShaderSource, err := ioutil.ReadFile("assets/shaders/vertexDefault.glsl")
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	fragmentShaderSource, err := ioutil.ReadFile("assets/shaders/defaultFragment.glsl")
+	fragmentShaderSource, err := ioutil.ReadFile("assets/shaders/fragmentVariableColor.glsl")
 	if err != nil {
 		logger.Error(err)
 		return
@@ -91,7 +91,7 @@ func main() {
 	vao := makeVao(square, squareIndices)
 
 	// draw wireframes
-	gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
 	// start event loop
 	for !window.ShouldClose() {

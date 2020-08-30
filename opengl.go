@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -43,14 +44,21 @@ func draw(vao uint32, window *glfw.Window, program uint32) {
 	gl.ClearColor(0.2, 0.3, 0.3, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	// actual drawing
+	// select shader program
 	gl.UseProgram(program)
 
+	// update uniform value
+	timeValue := glfw.GetTime()
+	greenValue := float32((math.Sin(timeValue) / 2.0) + 0.5)
+	vertexColorLocation := gl.GetUniformLocation(program, gl.Str("variableColor\x00"))
+	gl.Uniform4f(vertexColorLocation, 0.0, greenValue, 0.0, 1.0)
+
+	// draw vao
 	gl.BindVertexArray(vao)
 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 	// Unbinding is optional if we always bind a VAO before a draw call
-	// Also, would like to benchmark this
+	// Also, would like to benchmark with and without
 	// It is still safer to unbind so that if someone tries
 	// to draw without binding a VAO prior, it fails right away
 	gl.BindVertexArray(0)
