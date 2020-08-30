@@ -61,10 +61,7 @@ func main() {
 		gl.Viewport(0, 0, int32(width), int32(height))
 	})
 
-	// set background color
-	gl.ClearColor(0.2, 0.3, 0.3, 1)
-
-	// create a component
+	// create vao
 	square := []float32{
 		// X, Y, Z
 		-0.5, 0.5, 0, // top-left
@@ -75,12 +72,10 @@ func main() {
 		0.5, 0.5, 0, // top-right
 		0.5, -0.5, 0, // bottom-right
 	}
-
-	var components []*Component
-	components = append(components, NewComponent(square))
+	vao := makeVao(square)
 
 	// start event loop
 	for !window.ShouldClose() {
-		draw(components, window, program)
+		draw(vao, window, program)
 	}
 }

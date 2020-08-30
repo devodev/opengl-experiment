@@ -29,17 +29,24 @@ func makeVao(points []float32) uint32 {
 	return vao
 }
 
-func draw(components []*Component, window *glfw.Window, program uint32) {
+func draw(vao uint32, window *glfw.Window, program uint32) {
 	processInput(window)
 
 	// clear buffers
+	gl.ClearColor(0.2, 0.3, 0.3, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// actual drawing
 	gl.UseProgram(program)
-	for _, c := range components {
-		c.Draw()
-	}
+
+	gl.BindVertexArray(vao)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+
+	// Unbinding is optional if we always bind a VAO before a draw call
+	// Also, would like to benchmark this
+	// It is still safer to unbind so that if someone tries
+	// to draw without binding a VAO prior, it fails right away
+	gl.BindVertexArray(0)
 
 	glfw.PollEvents()
 	window.SwapBuffers()
