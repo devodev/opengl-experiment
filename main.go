@@ -30,8 +30,8 @@ var (
 
 // window attributes
 var (
-	windowWidth  = 640
-	windowHeight = 480
+	windowWidth  = 1024
+	windowHeight = 768
 	windowTitle  = "Hello World"
 )
 
@@ -67,16 +67,20 @@ func main() {
 
 	logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
 
-	// create a triangle VAO
-	triangle := []float32{
+	// create a square VAO
+	square := []float32{
 		// X, Y, Z
-		0, 0.5, 0, // top
-		-0.5, -0.5, 0, // left
-		0.5, -0.5, 0, // right
+		-1, 1, 0, // top-left
+		-1, -1, 0, // bottom-left
+		1, -1, 0, // bottom-right
+
+		-1, 1, 0, // top-left
+		1, 1, 0, // top-right
+		1, -1, 0, // bottom-right
 	}
 
 	var components []*Component
-	components = append(components, NewComponent(triangle))
+	components = append(components, NewComponent(square))
 
 	// start event loop
 	for !window.ShouldClose() {
