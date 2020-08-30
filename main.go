@@ -1,29 +1,11 @@
 package main
 
 import (
+	"io/ioutil"
 	"runtime"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-)
-
-// shaders
-var (
-	vertexShaderSource = `
-        #version 460
-        layout (location = 0) in vec3 vp;
-        void main() {
-            gl_Position = vec4(vp, 1.0);
-        }
-    ` + "\x00"
-
-	fragmentShaderSource = `
-        #version 460
-        out vec4 frag_colour;
-        void main() {
-            frag_colour = vec4(1, 0.5, 0.2, 1);
-        }
-    ` + "\x00"
 )
 
 // window attributes
@@ -54,9 +36,20 @@ func main() {
 
 	window.MakeContextCurrent()
 
+	vertexShaderSource, err := ioutil.ReadFile("assets/shaders/defaultVertex.glsl")
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	fragmentShaderSource, err := ioutil.ReadFile("assets/shaders/defaultFragment.glsl")
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
 	// initialize OpenGL
 	// *always do this after a call to `window.MakeContextCurrent()`
-	program, err := initOpenGL(vertexShaderSource, fragmentShaderSource)
+	program, err := initOpenGL(string(vertexShaderSource)+"\x00", string(fragmentShaderSource)+"\x00")
 	if err != nil {
 		logger.Error(err)
 		return
