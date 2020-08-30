@@ -12,7 +12,7 @@ import (
 // shaders
 var (
 	vertexShaderSource = `
-        #version 410
+        #version 460
         in vec3 vp;
         void main() {
             gl_Position = vec4(vp, 1.0);
@@ -20,7 +20,7 @@ var (
     ` + "\x00"
 
 	fragmentShaderSource = `
-        #version 410
+        #version 460
         out vec4 frag_colour;
         void main() {
             frag_colour = vec4(1, 1, 1, 1);
