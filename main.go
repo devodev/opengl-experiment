@@ -117,6 +117,27 @@ func (c *Component) Draw() {
 	gl.BindVertexArray(0)
 }
 
+func makeVao(points []float32) uint32 {
+	var vao uint32
+	gl.GenVertexArrays(1, &vao)
+	gl.BindVertexArray(vao)
+
+	var vbo uint32
+	gl.GenBuffers(1, &vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, 4*len(points), gl.Ptr(points), gl.STATIC_DRAW)
+	// VertexAttribPointer index refers to `layout (location = 0) ` in the vertex shader
+	// stride can be set to 0 when the values are tightly packed
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(3*4), nil)
+	gl.EnableVertexAttribArray(0)
+
+	// unbind objects
+	gl.BindVertexArray(0)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+
+	return vao
+}
+
 func draw(components []*Component, window *glfw.Window, program uint32) {
 	processInput(window)
 
@@ -175,44 +196,36 @@ func initOpenGL() (uint32, error) {
 	gl.AttachShader(prog, vertexShader)
 	gl.AttachShader(prog, fragmentShader)
 	gl.LinkProgram(prog)
+	gl.ValidateProgram(prog)
 
-	// error handling
-	var status int32
-	gl.GetProgramiv(prog, gl.LINK_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetProgramiv(prog, gl.INFO_LOG_LENGTH, &logLength)
-
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetProgramInfoLog(prog, logLength, nil, gl.Str(log))
-
-		return 0, fmt.Errorf("failed to link program: %v", log)
-	}
+	// free memory once attached to a program
 	gl.DeleteShader(vertexShader)
 	gl.DeleteShader(fragmentShader)
 
+	// dont do this if we need to debug
+	// the shaders in the GPU
+	gl.DetachShader(prog, vertexShader)
+	gl.DetachShader(prog, fragmentShader)
+
+	if err := retrieveProgramLinkError(prog); err != nil {
+		return 0, err
+	}
 	return prog, nil
 }
 
-func makeVao(points []float32) uint32 {
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
+func retrieveProgramLinkError(program uint32) error {
+	var status int32
+	gl.GetProgramiv(program, gl.LINK_STATUS, &status)
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &logLength)
 
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, 4*len(points), gl.Ptr(points), gl.STATIC_DRAW)
-	// VertexAttribPointer index refers to `layout (location = 0) ` in the vertex shader
-	// stride can be set to 0 when the values are tightly packed
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(3*4), nil)
-	gl.EnableVertexAttribArray(0)
+		log := strings.Repeat("\x00", int(logLength+1))
+		gl.GetProgramInfoLog(program, logLength, nil, gl.Str(log))
 
-	// unbind objects
-	gl.BindVertexArray(0)
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-
-	return vao
+		return fmt.Errorf("failed to link program: %v", log)
+	}
+	return nil
 }
 
 func compileShader(source string, shaderType uint32) (uint32, error) {
@@ -223,8 +236,13 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	free()
 
 	gl.CompileShader(shader)
+	if err := retrieveShaderCompileError(shader); err != nil {
+		return 0, err
+	}
+	return shader, nil
+}
 
-	// error handling
+func retrieveShaderCompileError(shader uint32) error {
 	var status int32
 	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status)
 	if status == gl.FALSE {
@@ -234,8 +252,7 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 		log := strings.Repeat("\x00", int(logLength+1))
 		gl.GetShaderInfoLog(shader, logLength, nil, gl.Str(log))
 
-		return 0, fmt.Errorf("failed to compile %v: %v", source, log)
+		return fmt.Errorf("failed to compile shader: %v", log)
 	}
-
-	return shader, nil
+	return nil
 }
