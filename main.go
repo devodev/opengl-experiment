@@ -26,16 +26,40 @@ func main() {
 	logger := NewLogger()
 
 	// initialize GLFW
-	window, err := initGLFW(windowWidth, windowHeight, windowTitle)
-	if err != nil {
-		logger.Error(err)
+	if err := glfw.Init(); err != nil {
+		logger.Errorf("could not initialize GLFW: %s", err)
 		return
 	}
 	defer glfw.Terminate()
 	logger.Printf("GLFW version: %s", glfw.GetVersionString())
 
+	glfw.WindowHint(glfw.ContextVersionMajor, 4)
+	glfw.WindowHint(glfw.ContextVersionMinor, 6)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+
+	// create a window
+	window, err := createWindow(windowWidth, windowHeight, windowTitle)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
 	window.MakeContextCurrent()
 
+	// initialize OpenGL
+	// *always do this after a call to `window.MakeContextCurrent()`
+	if err := gl.Init(); err != nil {
+		logger.Errorf("could not initialize OpenGL: %s", err)
+		return
+	}
+	logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
+
+	// set window resize callback
+	window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
+		gl.Viewport(0, 0, int32(width), int32(height))
+	})
+
+	// create a program with default shaders
 	vertexShaderSource, err := ioutil.ReadFile("assets/shaders/defaultVertex.glsl")
 	if err != nil {
 		logger.Error(err)
@@ -46,20 +70,11 @@ func main() {
 		logger.Error(err)
 		return
 	}
-
-	// initialize OpenGL
-	// *always do this after a call to `window.MakeContextCurrent()`
-	program, err := initOpenGL(string(vertexShaderSource)+"\x00", string(fragmentShaderSource)+"\x00")
+	program, err := createProgram(string(vertexShaderSource)+"\x00", string(fragmentShaderSource)+"\x00")
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
-
-	// set window resize callback
-	window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
-		gl.Viewport(0, 0, int32(width), int32(height))
-	})
 
 	// create vao
 	square := []float32{

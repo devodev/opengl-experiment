@@ -65,15 +65,7 @@ func processInput(w *glfw.Window) {
 	}
 }
 
-func initGLFW(width, height int, title string) (*glfw.Window, error) {
-	if err := glfw.Init(); err != nil {
-		return nil, fmt.Errorf("could not initialize GLFW: %s", err)
-	}
-
-	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 6)
-	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+func createWindow(width, height int, title string) (*glfw.Window, error) {
 	glfw.WindowHint(glfw.Resizable, glfw.True)
 
 	window, err := glfw.CreateWindow(width, height, title, nil, nil)
@@ -83,11 +75,7 @@ func initGLFW(width, height int, title string) (*glfw.Window, error) {
 	return window, nil
 }
 
-func initOpenGL(vsSource, fsSource string) (uint32, error) {
-	if err := gl.Init(); err != nil {
-		return 0, fmt.Errorf("could not initialize OpenGL: %s", err)
-	}
-
+func createProgram(vsSource, fsSource string) (uint32, error) {
 	vertexShader, err := compileShader(vsSource, gl.VERTEX_SHADER)
 	if err != nil {
 		return 0, fmt.Errorf("could not compile vertex shader: %s", err)
