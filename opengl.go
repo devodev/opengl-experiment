@@ -9,37 +9,21 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
-func makeVao(points []float32, indices []uint32) uint32 {
+func makeVaoAndIbo(points []float32, indices []uint32) (uint32, uint32) {
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
 
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, 4*len(points), gl.Ptr(points), gl.STATIC_DRAW)
-
-	var ebo uint32
-	gl.GenBuffers(1, &ebo)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 4*len(indices), gl.Ptr(indices), gl.STATIC_DRAW)
-
-	// VertexAttribPointer index refers to `layout (location = 0) ` in the vertex shader
-	// stride can be set to 0 when the values are tightly packed
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(3*4), nil)
-	gl.EnableVertexAttribArray(0)
+	_ = NewVBO(points)
+	ibo := NewIBO(indices)
 
 	// unbind objects
 	gl.BindVertexArray(0)
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 
-	return vao
+	return vao, ibo.id
 }
 
-func draw(vao uint32, window *glfw.Window, program uint32) {
-	processInput(window)
-
+func draw(vao, ebo uint32, program uint32) {
 	// clear buffers
 	gl.ClearColor(0.2, 0.3, 0.3, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -55,6 +39,7 @@ func draw(vao uint32, window *glfw.Window, program uint32) {
 
 	// draw vao
 	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 	// Unbinding is optional if we always bind a VAO before a draw call
@@ -62,15 +47,6 @@ func draw(vao uint32, window *glfw.Window, program uint32) {
 	// It is still safer to unbind so that if someone tries
 	// to draw without binding a VAO prior, it fails right away
 	gl.BindVertexArray(0)
-
-	glfw.PollEvents()
-	window.SwapBuffers()
-}
-
-func processInput(w *glfw.Window) {
-	if w.GetKey(glfw.KeyEscape) == glfw.Press {
-		w.SetShouldClose(true)
-	}
 }
 
 func createWindow(width, height int, title string) (*glfw.Window, error) {

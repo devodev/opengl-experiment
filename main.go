@@ -45,6 +45,7 @@ func main() {
 		return
 	}
 	window.MakeContextCurrent()
+	glfw.SwapInterval(1)
 
 	// initialize OpenGL
 	// *always do this after a call to `window.MakeContextCurrent()`
@@ -86,15 +87,26 @@ func main() {
 	}
 	squareIndices := []uint32{
 		0, 1, 2,
-		0, 3, 2,
+		2, 3, 0,
 	}
-	vao := makeVao(square, squareIndices)
+	vao, ebo := makeVaoAndIbo(square, squareIndices)
 
 	// draw wireframes
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
 	// start event loop
 	for !window.ShouldClose() {
-		draw(vao, window, program)
+		processInput(window)
+
+		draw(vao, ebo, program)
+
+		glfw.PollEvents()
+		window.SwapBuffers()
+	}
+}
+
+func processInput(w *glfw.Window) {
+	if w.GetKey(glfw.KeyEscape) == glfw.Press {
+		w.SetShouldClose(true)
 	}
 }
