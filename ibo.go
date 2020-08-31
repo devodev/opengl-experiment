@@ -15,8 +15,6 @@ func NewIBO(indices []uint32) *IBO {
 	ibo := &IBO{id: iboID, count: int32(len(indices))}
 
 	ibo.Bind()
-	defer ibo.Unbind()
-
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 4*len(indices), gl.Ptr(indices), gl.STATIC_DRAW)
 
 	return ibo

@@ -9,21 +9,27 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
-func makeVaoAndIbo(points []float32, indices []uint32) (uint32, uint32) {
+func makeVaoAndIbo(points []float32, indices []uint32) (uint32, *IBO) {
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
 	gl.BindVertexArray(vao)
+	defer gl.BindVertexArray(0)
 
-	_ = NewVBO(points)
+	vbo := NewVBO(points)
+	defer vbo.Unbind()
+
 	ibo := NewIBO(indices)
+	defer ibo.Unbind()
 
-	// unbind objects
-	gl.BindVertexArray(0)
+	// VertexAttribPointer index refers to `layout (location = 0) ` in the vertex shader
+	// stride can be set to 0 when the values are tightly packed
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(3*4), nil)
+	gl.EnableVertexAttribArray(0)
 
-	return vao, ibo.id
+	return vao, ibo
 }
 
-func draw(vao, ebo uint32, program uint32) {
+func draw(vaoID, iboID uint32, program uint32) {
 	// clear buffers
 	gl.ClearColor(0.2, 0.3, 0.3, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -38,8 +44,8 @@ func draw(vao, ebo uint32, program uint32) {
 	gl.Uniform4f(vertexColorLocation, 0.0, greenValue, 0.0, 1.0)
 
 	// draw vao
-	gl.BindVertexArray(vao)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	gl.BindVertexArray(vaoID)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboID)
 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 	// Unbinding is optional if we always bind a VAO before a draw call
@@ -76,13 +82,14 @@ func createProgram(vsSource, fsSource string) (uint32, error) {
 	gl.ValidateProgram(prog)
 
 	// free memory once attached to a program
-	gl.DeleteShader(vertexShader)
-	gl.DeleteShader(fragmentShader)
-
 	// dont do this if we need to debug
 	// the shaders in the GPU
-	gl.DetachShader(prog, vertexShader)
-	gl.DetachShader(prog, fragmentShader)
+	defer func() {
+		gl.DeleteShader(vertexShader)
+		gl.DeleteShader(fragmentShader)
+		gl.DetachShader(prog, vertexShader)
+		gl.DetachShader(prog, fragmentShader)
+	}()
 
 	if err := retrieveProgramLinkError(prog); err != nil {
 		return 0, err

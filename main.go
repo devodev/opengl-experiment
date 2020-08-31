@@ -89,7 +89,7 @@ func main() {
 		0, 1, 2,
 		2, 3, 0,
 	}
-	vao, ebo := makeVaoAndIbo(square, squareIndices)
+	vaoID, ibo := makeVaoAndIbo(square, squareIndices)
 
 	// draw wireframes
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
@@ -98,7 +98,7 @@ func main() {
 	for !window.ShouldClose() {
 		processInput(window)
 
-		draw(vao, ebo, program)
+		draw(vaoID, ibo.id, program)
 
 		glfw.PollEvents()
 		window.SwapBuffers()
