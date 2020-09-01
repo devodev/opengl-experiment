@@ -15,6 +15,11 @@ var (
 	windowTitle  = "Hello World"
 )
 
+var (
+	previousKeySpaceState = glfw.Release
+	currentPolygonMode    = gl.TRIANGLES
+)
+
 func init() {
 	// All calls to GLFW must be run on main thread
 	// This locks the calling goroutine(main here) to the current OS Thread
@@ -71,7 +76,10 @@ func main() {
 		logger.Error(err)
 		return
 	}
-	program, err := createProgram(string(vertexShaderSource)+"\x00", string(fragmentShaderSource)+"\x00")
+	vertexShaderSource = append(vertexShaderSource, byte('\x00'))
+	fragmentShaderSource = append(fragmentShaderSource, byte('\x00'))
+
+	shaderProgram, err := createProgram(string(vertexShaderSource), string(fragmentShaderSource))
 	if err != nil {
 		logger.Error(err)
 		return
@@ -89,16 +97,20 @@ func main() {
 		0, 1, 2,
 		2, 3, 0,
 	}
-	vaoID, ibo := makeVaoAndIbo(square, squareIndices)
 
-	// draw wireframes
-	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	vbo := NewVBO()
+	vbo.AddElement(square, 3, gl.FLOAT, true)
+
+	ibo := NewIBO(squareIndices)
+
+	vao := NewVAO()
+	vao.AddVBO(vbo)
 
 	// start event loop
 	for !window.ShouldClose() {
 		processInput(window)
 
-		draw(vaoID, ibo.id, program)
+		draw(vao, ibo, shaderProgram)
 
 		glfw.PollEvents()
 		window.SwapBuffers()
@@ -106,7 +118,20 @@ func main() {
 }
 
 func processInput(w *glfw.Window) {
+	// close window
 	if w.GetKey(glfw.KeyEscape) == glfw.Press {
 		w.SetShouldClose(true)
 	}
+
+	// toggle wireframes
+	keySpaceState := w.GetKey(glfw.KeySpace)
+	if keySpaceState == glfw.Release && previousKeySpaceState == glfw.Press {
+		if currentPolygonMode == gl.LINE {
+			currentPolygonMode = gl.FILL
+		} else {
+			currentPolygonMode = gl.LINE
+		}
+		gl.PolygonMode(gl.FRONT_AND_BACK, uint32(currentPolygonMode))
+	}
+	previousKeySpaceState = keySpaceState
 }

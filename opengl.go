@@ -9,50 +9,28 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
-func makeVaoAndIbo(points []float32, indices []uint32) (uint32, *IBO) {
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
-	defer gl.BindVertexArray(0)
-
-	vbo := NewVBO(points)
-	defer vbo.Unbind()
-
-	ibo := NewIBO(indices)
-	defer ibo.Unbind()
-
-	// VertexAttribPointer index refers to `layout (location = 0) ` in the vertex shader
-	// stride can be set to 0 when the values are tightly packed
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(3*4), nil)
-	gl.EnableVertexAttribArray(0)
-
-	return vao, ibo
-}
-
-func draw(vaoID, iboID uint32, program uint32) {
+func draw(vao *VAO, ibo *IBO, shaderProgram uint32) {
 	// clear buffers
 	gl.ClearColor(0.2, 0.3, 0.3, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// select shader program
-	gl.UseProgram(program)
+	gl.UseProgram(shaderProgram)
 
 	// update uniform value
-	timeValue := glfw.GetTime()
-	greenValue := float32((math.Sin(timeValue) / 2.0) + 0.5)
-	vertexColorLocation := gl.GetUniformLocation(program, gl.Str("variableColor\x00"))
+	currentTime := glfw.GetTime()
+	greenValue := float32((math.Sin(currentTime) / 2.0) + 0.5)
+	vertexColorLocation := gl.GetUniformLocation(shaderProgram, gl.Str("variableColor\x00"))
 	gl.Uniform4f(vertexColorLocation, 0.0, greenValue, 0.0, 1.0)
 
-	// draw vao
-	gl.BindVertexArray(vaoID)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboID)
-	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
+	// draw
+	vao.Bind()
+	defer vao.Unbind()
 
-	// Unbinding is optional if we always bind a VAO before a draw call
-	// Also, would like to benchmark with and without
-	// It is still safer to unbind so that if someone tries
-	// to draw without binding a VAO prior, it fails right away
-	gl.BindVertexArray(0)
+	ibo.Bind()
+	defer ibo.Unbind()
+
+	gl.DrawElements(gl.TRIANGLES, ibo.count, gl.UNSIGNED_INT, nil)
 }
 
 func createWindow(width, height int, title string) (*glfw.Window, error) {
