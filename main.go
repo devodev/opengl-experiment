@@ -1,7 +1,8 @@
 package main
 
 import (
-	"io/ioutil"
+	"fmt"
+	"math"
 	"runtime"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -66,20 +67,10 @@ func main() {
 	})
 
 	// create a program with default shaders
-	vertexShaderSource, err := ioutil.ReadFile("assets/shaders/vertexDefault.glsl")
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	fragmentShaderSource, err := ioutil.ReadFile("assets/shaders/fragmentVariableColor.glsl")
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	vertexShaderSource = append(vertexShaderSource, byte('\x00'))
-	fragmentShaderSource = append(fragmentShaderSource, byte('\x00'))
-
-	shaderProgram, err := createProgram(string(vertexShaderSource), string(fragmentShaderSource))
+	shaderProgram, err := NewShaderProgram(
+		"assets/shaders/vertexDefault.glsl",
+		"assets/shaders/fragmentVariableColor.glsl",
+	)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -115,6 +106,43 @@ func main() {
 		glfw.PollEvents()
 		window.SwapBuffers()
 	}
+}
+
+func createWindow(width, height int, title string) (*glfw.Window, error) {
+	glfw.WindowHint(glfw.Resizable, glfw.True)
+
+	window, err := glfw.CreateWindow(width, height, title, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create window: %s", err)
+	}
+	return window, nil
+}
+
+func draw(vao *VAO, ibo *IBO, shaderProgram *ShaderProgram) {
+	// clear buffers
+	gl.ClearColor(0.2, 0.3, 0.3, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+	// select shader program
+	shaderProgram.Bind()
+
+	// update uniform value
+	currentTime := glfw.GetTime()
+	greenValue := float32((math.Sin(currentTime) / 2.0) + 0.5)
+	shaderProgram.SetUniform4f("variableColor", 0.0, greenValue, 0.0, 1.0)
+
+	// draw
+	vao.Bind()
+	// TODO: might want to benchmark this and maybe remove them
+	// TODO: or do that only in debug mode or something..
+	defer vao.Unbind()
+
+	ibo.Bind()
+	// TODO: might want to benchmark this and maybe remove them
+	// TODO: or do that only in debug mode or something..
+	defer ibo.Unbind()
+
+	gl.DrawElements(gl.TRIANGLES, ibo.count, gl.UNSIGNED_INT, nil)
 }
 
 func processInput(w *glfw.Window) {
