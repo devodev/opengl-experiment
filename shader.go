@@ -14,25 +14,6 @@ type ShaderProgram struct {
 	uniformLocations map[string]int32
 }
 
-// Bind .
-func (s *ShaderProgram) Bind() {
-	gl.UseProgram(s.id)
-}
-
-// Unbind .
-func (s *ShaderProgram) Unbind() {
-	gl.UseProgram(0)
-}
-
-// SetUniform4f .
-func (s *ShaderProgram) SetUniform4f(name string, v0, v1, v2, v3 float32) {
-	location, ok := s.uniformLocations[name]
-	if !ok {
-		location = gl.GetUniformLocation(s.id, gl.Str(name+"\x00"))
-	}
-	gl.Uniform4f(location, v0, v1, v2, v3)
-}
-
 // NewShaderProgram .
 func NewShaderProgram(vertexShaderFilepath, fragmentShaderFilepath string) (*ShaderProgram, error) {
 	// TODO: we might want to only create an empty program on init
@@ -83,6 +64,34 @@ func NewShaderProgram(vertexShaderFilepath, fragmentShaderFilepath string) (*Sha
 	shaderProgram := &ShaderProgram{id: shaderProgramID}
 
 	return shaderProgram, nil
+}
+
+// Bind .
+func (s *ShaderProgram) Bind() {
+	gl.UseProgram(s.id)
+}
+
+// Unbind .
+func (s *ShaderProgram) Unbind() {
+	gl.UseProgram(0)
+}
+
+func (s *ShaderProgram) getUniformLocation(name string) int32 {
+	location, ok := s.uniformLocations[name]
+	if !ok {
+		location = gl.GetUniformLocation(s.id, gl.Str(name+"\x00"))
+	}
+	return location
+}
+
+// SetUniform1f .
+func (s *ShaderProgram) SetUniform1f(name string, v0 float32) {
+	gl.Uniform1f(s.getUniformLocation(name), v0)
+}
+
+// SetUniform4f .
+func (s *ShaderProgram) SetUniform4f(name string, v0, v1, v2, v3 float32) {
+	gl.Uniform4f(s.getUniformLocation(name), v0, v1, v2, v3)
 }
 
 func compileShader(source string, shaderType uint32) (uint32, error) {

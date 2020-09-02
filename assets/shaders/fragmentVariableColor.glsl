@@ -1,8 +1,10 @@
 #version 460
-out vec4 frag_color;
+layout (location = 0) out vec4 frag_color;
 
-uniform vec4 variableColor;
+in vec2 out_color;
+
+uniform float variableColor;
 
 void main() {
-    frag_color = variableColor;
+    frag_color = vec4(out_color, variableColor, 1.0);
 }

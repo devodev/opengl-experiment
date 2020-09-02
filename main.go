@@ -79,18 +79,27 @@ func main() {
 	// create vao
 	square := []float32{
 		// X, Y, Z
-		-0.5, 0.5, 0, // top-left
-		-0.5, -0.5, 0, // bottom-left
-		0.5, -0.5, 0, // bottom-right
-		0.5, 0.5, 0, // top-right
+		-0.5, 0.5, 1, 0, // top-left
+		-0.5, -0.5, 0, 1, // bottom-left
+		0.5, -0.5, 0, 0, // bottom-right
+		0.5, 0.5, 1, 1, // top-right
 	}
 	squareIndices := []uint32{
 		0, 1, 2,
 		2, 3, 0,
 	}
 
-	vbo := NewVBO()
-	vbo.AddElement(square, 3, gl.FLOAT, true)
+	vbo, err := NewVBO(square, gl.FLOAT)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	// This declares the interleaving layout of VBO.
+	// Here, each `square` vertex contains:
+	// 2 * vec2 float32 normalized values
+	// *These map directly to vertex shader attributes
+	vbo.AddElement(2, true)
+	vbo.AddElement(2, true)
 
 	ibo := NewIBO(squareIndices)
 
@@ -129,7 +138,7 @@ func draw(vao *VAO, ibo *IBO, shaderProgram *ShaderProgram) {
 	// update uniform value
 	currentTime := glfw.GetTime()
 	greenValue := float32((math.Sin(currentTime) / 2.0) + 0.5)
-	shaderProgram.SetUniform4f("variableColor", 0.0, greenValue, 0.0, 1.0)
+	shaderProgram.SetUniform1f("variableColor", greenValue)
 
 	// draw
 	vao.Bind()

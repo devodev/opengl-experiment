@@ -22,11 +22,11 @@ func (v *VAO) AddVBO(vbo *VBO) {
 	vbo.Bind()
 	defer vbo.Unbind()
 
+	offset := 0
 	for idx, element := range vbo.elements {
-		// VertexAttribPointer index refers to `layout (location = 0) ` in the vertex shader
-		// stride can be set to 0 when the values are tightly packed
-		gl.VertexAttribPointer(uint32(idx), element.count, element.eType, element.normalized, element.stride, gl.PtrOffset(element.offset))
+		gl.VertexAttribPointer(uint32(idx), element.count, vbo.dataType.value, element.normalized, vbo.GetStride(), gl.PtrOffset(offset))
 		gl.EnableVertexAttribArray(uint32(idx))
+		offset += (vbo.dataType.size * int(element.count))
 	}
 }
 
