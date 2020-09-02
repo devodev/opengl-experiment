@@ -1,14 +1,15 @@
 # opengl-experimentation
 
-Let's have fun with OpenGL in GO.
+![Current Project State](docs/images/currentProjectState.gif?raw=true "Current Project State")
 
 ## Setup
 
 GLFW Depencies: <https://github.com/go-gl/glfw#installation>
 
-On windows, install a cgo compiler (Ex: TDM-GCC)
+install a cgo compiler
 
 ```bash
+# Windows
 tdm64-gcc-9.2.0.exe from: https://jmeubank.github.io/tdm-gcc/
 ```
 
