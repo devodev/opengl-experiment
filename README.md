@@ -4,14 +4,9 @@
 
 ## Setup
 
-GLFW Depencies: <https://github.com/go-gl/glfw#installation>
+Install GLFW Depencies: <https://github.com/go-gl/glfw#installation>
 
-install a cgo compiler
-
-```bash
-# Windows
-tdm64-gcc-9.2.0.exe from: https://jmeubank.github.io/tdm-gcc/
-```
+Install a cgo compiler(Windows): <https://jmeubank.github.io/tdm-gcc/>
 
 Install OpenGL and GLFW cgo binding libraries
 
@@ -25,7 +20,7 @@ go get -u github.com/go-gl/glfw/v3.3/glfw
 Build the project
 
 ```bash
-git clone git@github.com:devodev/opengl-experimentation.git
+git clone https://github.com/devodev/opengl-experimentation.git
 cd opengl-experimentation
 go build .
 ```
