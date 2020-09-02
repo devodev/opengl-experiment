@@ -98,8 +98,8 @@ func main() {
 	// Here, each `square` vertex contains:
 	// 2 * vec2 float32 normalized values
 	// *These map directly to vertex shader attributes
-	vbo.AddElement(2, true)
-	vbo.AddElement(2, true)
+	vbo.AddElement(2, false)
+	vbo.AddElement(2, false)
 
 	ibo := NewIBO(squareIndices)
 
