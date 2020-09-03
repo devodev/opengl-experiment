@@ -3,6 +3,7 @@ package main
 import (
 	"runtime"
 
+	"github.com/devodev/opengl-experimentation/internal/opengl"
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
@@ -28,7 +29,7 @@ func main() {
 	defer close()
 
 	// create a program with default shaders
-	shaderProgram, err := NewShaderProgram(
+	shaderProgram, err := opengl.NewShaderProgram(
 		"assets/shaders/vertexDefault.glsl",
 		"assets/shaders/fragmentVariableColor.glsl",
 	)
@@ -50,7 +51,7 @@ func main() {
 		2, 3, 0,
 	}
 
-	vbo, err := NewVBO(square, gl.FLOAT)
+	vbo, err := opengl.NewVBO(square, gl.FLOAT)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -62,9 +63,9 @@ func main() {
 	vbo.AddElement(2, false)
 	vbo.AddElement(2, false)
 
-	ibo := NewIBO(squareIndices)
+	ibo := opengl.NewIBO(squareIndices)
 
-	vao := NewVAO()
+	vao := opengl.NewVAO()
 	vao.AddVBO(vbo)
 
 	app.Loop(func(a *Application) {

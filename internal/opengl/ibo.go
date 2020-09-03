@@ -1,4 +1,4 @@
-package main
+package opengl
 
 import "github.com/go-gl/gl/v4.6-core/gl"
 
@@ -30,4 +30,9 @@ func (v *IBO) Bind() {
 // Unbind .
 func (v *IBO) Unbind() {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
+}
+
+// GetCount .
+func (v *IBO) GetCount() int32 {
+	return v.count
 }

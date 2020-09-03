@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/devodev/opengl-experimentation/internal/opengl"
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
@@ -128,7 +129,7 @@ func (a *Application) Loop(fn func(*Application)) {
 	}
 }
 
-func (a *Application) draw(vao *VAO, ibo *IBO, shaderProgram *ShaderProgram) {
+func (a *Application) draw(vao *opengl.VAO, ibo *opengl.IBO, shaderProgram *opengl.ShaderProgram) {
 	// clear buffers
 	gl.ClearColor(0.2, 0.3, 0.3, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -152,7 +153,7 @@ func (a *Application) draw(vao *VAO, ibo *IBO, shaderProgram *ShaderProgram) {
 	// TODO: or do that only in debug mode or something..
 	defer ibo.Unbind()
 
-	gl.DrawElements(gl.TRIANGLES, ibo.count, gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.TRIANGLES, ibo.GetCount(), gl.UNSIGNED_INT, nil)
 }
 
 func (a *Application) processInput() {
