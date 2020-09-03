@@ -4,7 +4,6 @@ import (
 	"runtime"
 
 	"github.com/devodev/opengl-experimentation/internal/opengl"
-	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
 func init() {
@@ -51,7 +50,7 @@ func main() {
 		2, 3, 0,
 	}
 
-	vbo, err := opengl.NewVBO(square, gl.FLOAT)
+	vbo, err := opengl.NewVBO(square, opengl.FLOAT)
 	if err != nil {
 		logger.Error(err)
 		return
