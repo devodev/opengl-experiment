@@ -34,5 +34,8 @@ func main() {
 	}
 	app.AddComponent(squareTexture)
 
-	app.Run()
+	if err := app.Run(); err != nil {
+		logger.Errorf("error running application: %s", err)
+		return
+	}
 }

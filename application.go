@@ -14,6 +14,7 @@ var (
 	defaultWindowWidth     = 1024
 	defaultWindowHeight    = 768
 	defaultWindowTitle     = "Application"
+	defaultWindowResizable = true
 	defaultBackgroundColor = color.RGBA{51, 75, 75, 1}
 )
 
@@ -32,13 +33,14 @@ var (
 // from the main function before initiliazing
 // an application.
 type Application struct {
-	windowWidth  int
-	windowHeight int
-	windowTitle  string
-
-	backgroundColor color.RGBA
+	windowWidth     int
+	windowHeight    int
+	windowTitle     string
+	windowResizable bool
 
 	running bool
+
+	backgroundColor color.RGBA
 
 	window *glfw.Window
 	logger *SimpleLogger
@@ -63,6 +65,7 @@ func NewApplication(options ...ApplicationOption) (*Application, error) {
 		windowWidth:     defaultWindowWidth,
 		windowHeight:    defaultWindowHeight,
 		windowTitle:     defaultWindowTitle,
+		windowResizable: defaultWindowResizable,
 		backgroundColor: defaultBackgroundColor,
 		running:         true,
 		logger:          NewLogger(),
@@ -72,26 +75,9 @@ func NewApplication(options ...ApplicationOption) (*Application, error) {
 			return nil, err
 		}
 	}
-
-	window, err := CreateWindow(defaultWindowWidth, defaultWindowHeight, defaultWindowTitle)
-	if err != nil {
-		return nil, fmt.Errorf("error creating window: %s", err)
+	if err := app.init(); err != nil {
+		return nil, err
 	}
-	app.window = window
-	app.logger.Printf("GLFW version: %s", glfw.GetVersionString())
-
-	// initialize OpenGL
-	// *always do this after a call to `window.MakeContextCurrent()`
-	if err := gl.Init(); err != nil {
-		return nil, fmt.Errorf("error initializing OpenGL: %s", err)
-	}
-	app.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
-
-	// set window resize callback
-	app.window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
-		gl.Viewport(0, 0, int32(width), int32(height))
-	})
-
 	return app, nil
 }
 
@@ -106,7 +92,10 @@ func (a *Application) Close() error {
 }
 
 // Run .
-func (a *Application) Run() {
+func (a *Application) Run() error {
+	if !a.running {
+		return fmt.Errorf("application is closed")
+	}
 	// sync with monitor refresh rate
 	glfw.SwapInterval(1)
 
@@ -121,11 +110,38 @@ func (a *Application) Run() {
 		glfw.PollEvents()
 		a.window.SwapBuffers()
 	}
+	return nil
 }
 
 // AddComponent .
 func (a *Application) AddComponent(c components.Component) {
 	a.components = append(a.components, c)
+}
+
+func (a *Application) init() error {
+	window, err := CreateWindow(a.windowWidth, a.windowHeight, a.windowTitle, a.windowResizable)
+	if err != nil {
+		return fmt.Errorf("error creating window: %s", err)
+	}
+	a.window = window
+	a.logger.Printf("GLFW version: %s", glfw.GetVersionString())
+
+	a.window.MakeContextCurrent()
+
+	// initialize OpenGL
+	// *always do this after a call to `window.MakeContextCurrent()`
+	if err := gl.Init(); err != nil {
+		return fmt.Errorf("error initializing OpenGL: %s", err)
+	}
+	a.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
+
+	// set window resize callback
+	if a.windowResizable {
+		a.window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
+			gl.Viewport(0, 0, int32(width), int32(height))
+		})
+	}
+	return nil
 }
 
 func (a *Application) processInput() {
@@ -150,11 +166,10 @@ func (a *Application) processInput() {
 func (a *Application) clear() {
 	// clear buffers
 	gl.ClearColor(
-		float32(a.backgroundColor.R)/256,
-		float32(a.backgroundColor.G)/256,
-		float32(a.backgroundColor.B)/256,
-		float32(a.backgroundColor.A)/256,
+		float32(a.backgroundColor.R)/255,
+		float32(a.backgroundColor.G)/255,
+		float32(a.backgroundColor.B)/255,
+		float32(a.backgroundColor.A)/255,
 	)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
 }
