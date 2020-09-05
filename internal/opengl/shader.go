@@ -89,6 +89,11 @@ func (s *ShaderProgram) SetUniform1f(name string, v0 float32) {
 	gl.Uniform1f(s.getUniformLocation(name), v0)
 }
 
+// SetUniform1i .
+func (s *ShaderProgram) SetUniform1i(name string, v0 int32) {
+	gl.Uniform1i(s.getUniformLocation(name), v0)
+}
+
 // SetUniform4f .
 func (s *ShaderProgram) SetUniform4f(name string, v0, v1, v2, v3 float32) {
 	gl.Uniform4f(s.getUniformLocation(name), v0, v1, v2, v3)
