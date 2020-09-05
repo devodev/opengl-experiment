@@ -99,12 +99,16 @@ func (a *Application) Run() error {
 	// sync with monitor refresh rate
 	glfw.SwapInterval(1)
 
+	for _, c := range a.components {
+		c.OnInit(a.window)
+	}
+
 	for !a.window.ShouldClose() {
 		a.processInput()
 		a.clear()
 
 		for _, c := range a.components {
-			c.OnUpdate()
+			c.OnUpdate(a.window)
 		}
 
 		glfw.PollEvents()

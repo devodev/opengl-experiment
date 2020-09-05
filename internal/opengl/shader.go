@@ -99,6 +99,11 @@ func (s *ShaderProgram) SetUniform4f(name string, v0, v1, v2, v3 float32) {
 	gl.Uniform4f(s.getUniformLocation(name), v0, v1, v2, v3)
 }
 
+// SetUniformMatrix4fv .
+func (s *ShaderProgram) SetUniformMatrix4fv(name string, count int32, transpose bool, value *float32) {
+	gl.UniformMatrix4fv(s.getUniformLocation(name), count, transpose, value)
+}
+
 func compileShader(source string, shaderType uint32) (uint32, error) {
 	shaderProgramID := gl.CreateShader(shaderType)
 

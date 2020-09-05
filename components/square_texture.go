@@ -6,6 +6,8 @@ import (
 	"github.com/devodev/opengl-experimentation/internal/opengl"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // SquareTexture .
@@ -64,10 +66,26 @@ func NewSquareTexture() (*SquareTexture, error) {
 	return component, nil
 }
 
-// OnUpdate .
-func (c *SquareTexture) OnUpdate() {
+// OnInit .
+func (c *SquareTexture) OnInit(window *glfw.Window) {
 	c.shader.Bind()
+	defer c.shader.Unbind()
 
+	width, height := window.GetSize()
+
+	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(width)/float32(height), 0.1, 10.0)
+	c.shader.SetUniformMatrix4fv("projection", 1, false, &projection[0])
+
+	camera := mgl32.LookAtV(mgl32.Vec3{0, 0, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	c.shader.SetUniformMatrix4fv("camera", 1, false, &camera[0])
+
+	model := mgl32.Ident4()
+	c.shader.SetUniformMatrix4fv("model", 1, false, &model[0])
+}
+
+// OnUpdate .
+func (c *SquareTexture) OnUpdate(window *glfw.Window) {
+	c.shader.Bind()
 	c.shader.SetUniform1i("tex", int32(c.texture.GetTextureUnit()-gl.TEXTURE0))
 
 	c.texture.Bind()

@@ -61,6 +61,10 @@ func NewSquare() (*Square, error) {
 	return component, nil
 }
 
+// OnInit .
+func (c *Square) OnInit(window *glfw.Window) {
+}
+
 // OnUpdate .
 func (c *Square) OnUpdate() {
 	// select shader program
