@@ -74,13 +74,11 @@ func (c *SquareTexture) OnInit(window *glfw.Window) {
 	width, height := window.GetSize()
 
 	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(width)/float32(height), 0.1, 10.0)
-	c.shader.SetUniformMatrix4fv("projection", 1, false, &projection[0])
-
 	camera := mgl32.LookAtV(mgl32.Vec3{0, 0, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	c.shader.SetUniformMatrix4fv("camera", 1, false, &camera[0])
-
 	model := mgl32.Ident4()
-	c.shader.SetUniformMatrix4fv("model", 1, false, &model[0])
+
+	mvp := projection.Mul4(camera).Mul4(model)
+	c.shader.SetUniformMatrix4fv("mvp", 1, false, &mvp[0])
 }
 
 // OnUpdate .
