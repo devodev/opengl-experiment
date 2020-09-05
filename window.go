@@ -13,9 +13,6 @@ var (
 	glfwOpenGLForwardCompatible = glfw.True
 )
 
-// WindowCleanupFn .
-type WindowCleanupFn func()
-
 // CreateWindow .
 func CreateWindow(width, height int, title string, resizable bool) (*glfw.Window, error) {
 	if err := glfw.Init(); err != nil {
