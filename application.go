@@ -104,7 +104,6 @@ func (a *Application) Run() error {
 	}
 
 	for !a.window.ShouldClose() {
-		a.processInput()
 		a.clear()
 
 		for _, c := range a.components {
@@ -150,25 +149,6 @@ func (a *Application) init() error {
 		})
 	}
 	return nil
-}
-
-func (a *Application) processInput() {
-	// close window
-	if a.window.GetKey(glfw.KeyEscape) == glfw.Press {
-		a.window.SetShouldClose(true)
-	}
-
-	// toggle wireframes
-	keySpaceState := a.window.GetKey(glfw.KeySpace)
-	if keySpaceState == glfw.Release && previousKeySpaceState == glfw.Press {
-		if currentPolygonMode == gl.LINE {
-			currentPolygonMode = gl.FILL
-		} else {
-			currentPolygonMode = gl.LINE
-		}
-		gl.PolygonMode(gl.FRONT_AND_BACK, uint32(currentPolygonMode))
-	}
-	previousKeySpaceState = keySpaceState
 }
 
 func (a *Application) clear() {
