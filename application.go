@@ -139,6 +139,10 @@ func (a *Application) init() error {
 	}
 	a.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
 
+	// set blending function
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
 	// set window resize callback
 	if a.windowResizable {
 		a.window.SetFramebufferSizeCallback(func(w *glfw.Window, width int, height int) {
