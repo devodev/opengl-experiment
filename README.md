@@ -1,6 +1,6 @@
 # opengl-experimentation
 
-![Current Project State](docs/images/currentProjectState.gif?raw=true "Current Project State")
+![Current Project State](docs/images/currentProjectState2.gif?raw=true "Current Project State")
 
 ## Setup
 
