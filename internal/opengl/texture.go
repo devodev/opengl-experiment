@@ -5,10 +5,11 @@ import (
 	"image"
 	"os"
 
-	"image/draw"
 	// need to initialize each image type
 	// that could be used in NewTexture
 	_ "image/png"
+
+	"github.com/disintegration/imaging"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
@@ -75,7 +76,7 @@ func (t *Texture) GetTextureUnit() uint32 {
 	return t.textureUnit
 }
 
-func rgbaFromFile(filepath string) (*image.RGBA, error) {
+func rgbaFromFile(filepath string) (*image.NRGBA, error) {
 	reader, err := os.Open(filepath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading texture file: %s", err)
@@ -86,11 +87,17 @@ func rgbaFromFile(filepath string) (*image.RGBA, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error decoding texture file: %s", err)
 	}
-	rgba := image.NewRGBA(img.Bounds())
-	if rgba.Stride != rgba.Rect.Size().X*4 {
-		return nil, fmt.Errorf("error creating texture rgba: unsupported stride")
-	}
-	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+	// Replaced manually drawing image.Image into image.RGBA
+	// with disintegration/imaging lib, which provide convenience methods
+	// for flipping/transposing/etc.
+	//
+	nrgba := imaging.FlipV(img)
+	//
+	// rgba := image.NewRGBA(img.Bounds())
+	// if rgba.Stride != rgba.Rect.Size().X*4 {
+	// 	return nil, fmt.Errorf("error creating texture rgba: unsupported stride")
+	// }
+	// draw.Draw(rgba, img.Bounds(), img, image.Point{0, 0}, draw.Src)
 
-	return rgba, nil
+	return nrgba, nil
 }
