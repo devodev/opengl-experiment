@@ -3,7 +3,8 @@ package main
 import (
 	"runtime"
 
-	"github.com/devodev/opengl-experimentation/components"
+	"github.com/devodev/opengl-experimentation/internal/engine"
+	"github.com/devodev/opengl-experimentation/internal/engine/components"
 )
 
 func init() {
@@ -14,8 +15,8 @@ func init() {
 }
 
 func main() {
-	logger := NewLogger()
-	app, err := NewApplication(WithLoggerOption(logger))
+	logger := engine.NewLogger()
+	app, err := engine.NewApplication(engine.WithLoggerOption(logger))
 	if err != nil {
 		logger.Errorf("error creating application: %s", err)
 		return
