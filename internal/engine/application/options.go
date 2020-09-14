@@ -1,12 +1,15 @@
 package application
 
-import "github.com/devodev/opengl-experimentation/internal/engine/window"
+import (
+	"github.com/devodev/opengl-experimentation/internal/engine"
+	"github.com/devodev/opengl-experimentation/internal/engine/window"
+)
 
 // Option .
 type Option func(*Application) error
 
 // WithLoggerOption .
-func WithLoggerOption(logger *SimpleLogger) Option {
+func WithLoggerOption(logger *engine.SimpleLogger) Option {
 	return func(a *Application) error {
 		a.logger = logger
 		return nil

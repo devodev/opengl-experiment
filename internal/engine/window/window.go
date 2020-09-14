@@ -2,7 +2,6 @@ package window
 
 import (
 	"fmt"
-	"image/color"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -20,16 +19,14 @@ var (
 	defaultWindowHeight    = 768
 	defaultWindowTitle     = "Application"
 	defaultWindowResizable = true
-	defaultBackgroundColor = color.RGBA{51, 75, 75, 1}
 )
 
 // Window .
 type Window struct {
-	width           int
-	height          int
-	title           string
-	resizable       bool
-	backgroundColor color.RGBA
+	width     int
+	height    int
+	title     string
+	resizable bool
 
 	window *glfw.Window
 }
@@ -37,11 +34,10 @@ type Window struct {
 // New .
 func New(options ...Option) (*Window, error) {
 	window := &Window{
-		width:           defaultWindowWidth,
-		height:          defaultWindowHeight,
-		title:           defaultWindowTitle,
-		resizable:       defaultWindowResizable,
-		backgroundColor: defaultBackgroundColor,
+		width:     defaultWindowWidth,
+		height:    defaultWindowHeight,
+		title:     defaultWindowTitle,
+		resizable: defaultWindowResizable,
 	}
 
 	for _, opt := range options {
@@ -87,18 +83,6 @@ func (w *Window) Init() error {
 	glfw.SwapInterval(1)
 
 	return nil
-}
-
-// Clear .
-func (w *Window) Clear() {
-	// clear buffers
-	gl.ClearColor(
-		float32(w.backgroundColor.R)/255,
-		float32(w.backgroundColor.G)/255,
-		float32(w.backgroundColor.B)/255,
-		float32(w.backgroundColor.A)/255,
-	)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 // ShouldClose .

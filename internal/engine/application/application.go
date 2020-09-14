@@ -3,7 +3,8 @@ package application
 import (
 	"fmt"
 
-	"github.com/devodev/opengl-experimentation/internal/engine/components"
+	"github.com/devodev/opengl-experimentation/internal/engine"
+	"github.com/devodev/opengl-experimentation/internal/engine/renderer"
 	"github.com/devodev/opengl-experimentation/internal/engine/window"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -19,10 +20,11 @@ import (
 type Application struct {
 	running bool
 
-	window *window.Window
-	logger *SimpleLogger
+	window   *window.Window
+	renderer *renderer.Renderer
+	logger   *engine.SimpleLogger
 
-	components []components.Component
+	layers []Layer
 }
 
 // New .
@@ -31,10 +33,15 @@ func New(options ...Option) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	renderer, err := renderer.New(window)
+	if err != nil {
+		return nil, err
+	}
 	app := &Application{
-		running: true,
-		window:  window,
-		logger:  NewLogger(),
+		running:  true,
+		window:   window,
+		renderer: renderer,
+		logger:   engine.NewLogger(),
 	}
 	for _, option := range options {
 		if err := option(app); err != nil {
@@ -45,6 +52,28 @@ func New(options ...Option) (*Application, error) {
 		return nil, err
 	}
 	return app, nil
+}
+
+// Run .
+func (a *Application) Run() error {
+	if !a.running {
+		return fmt.Errorf("application is closed")
+	}
+
+	// init components
+	for _, layer := range a.layers {
+		layer.OnInit(a)
+	}
+
+	// main loop
+	for !a.isAlive() {
+		a.renderer.Clear()
+		for _, layer := range a.layers {
+			layer.OnUpdate(a)
+		}
+		a.onUpdate()
+	}
+	return nil
 }
 
 // Close .
@@ -59,34 +88,9 @@ func (a *Application) Close() error {
 	return nil
 }
 
-// Run .
-func (a *Application) Run() error {
-	if !a.running {
-		return fmt.Errorf("application is closed")
-	}
-
-	// init components
-	for _, c := range a.components {
-		c.OnInit(a.window.GetGLFWWindow())
-	}
-
-	// main loop
-	for !a.isAlive() {
-		// TODO: move to renderer
-		a.window.Clear()
-		for _, c := range a.components {
-			// TODO: pass application instead of window
-			// TODO: add method on app to get Window
-			c.OnUpdate(a.window.GetGLFWWindow())
-		}
-		a.onUpdate()
-	}
-	return nil
-}
-
-// AddComponent .
-func (a *Application) AddComponent(c components.Component) {
-	a.components = append(a.components, c)
+// AddLayer .
+func (a *Application) AddLayer(l Layer) {
+	a.layers = append(a.layers, l)
 }
 
 func (a *Application) init() error {
@@ -95,20 +99,16 @@ func (a *Application) init() error {
 	}
 	a.logger.Printf("GLFW version: %s", glfw.GetVersionString())
 
-	// TODO: v move to renderer v
-	// initialize OpenGL
-	// *always do this after a call to `window.MakeContextCurrent()`
-	if err := gl.Init(); err != nil {
-		return fmt.Errorf("error initializing OpenGL: %s", err)
+	if err := a.renderer.Init(); err != nil {
+		return fmt.Errorf("error initializing renderer: %v", err)
 	}
 	a.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
-
-	// set blending function
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-	// TODO: ^ move to renderer ^
 	return nil
+}
+
+// GetWindow .
+func (a *Application) GetWindow() *window.Window {
+	return a.window
 }
 
 func (a *Application) isAlive() bool {

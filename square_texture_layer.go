@@ -1,8 +1,9 @@
-package components
+package main
 
 import (
 	"fmt"
 
+	"github.com/devodev/opengl-experimentation/internal/engine/application"
 	"github.com/devodev/opengl-experimentation/internal/opengl"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -94,10 +95,10 @@ func NewSquareTexture() (*SquareTexture, error) {
 }
 
 // OnInit .
-func (c *SquareTexture) OnInit(window *glfw.Window) {
-	window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+func (c *SquareTexture) OnInit(app *application.Application) {
+	app.GetWindow().GetGLFWWindow().SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 		// we lost focus, dont process synthetic events
-		if window.GetAttrib(glfw.Focused) == glfw.False {
+		if w.GetAttrib(glfw.Focused) == glfw.False {
 			return
 		}
 		// close window
@@ -131,7 +132,7 @@ func (c *SquareTexture) OnInit(window *glfw.Window) {
 }
 
 // OnUpdate .
-func (c *SquareTexture) OnUpdate(window *glfw.Window) {
+func (c *SquareTexture) OnUpdate(app *application.Application) {
 	currentTime := glfw.GetTime()
 	deltaTime = currentTime - lastFrame
 	lastFrame = currentTime
@@ -151,7 +152,7 @@ func (c *SquareTexture) OnUpdate(window *glfw.Window) {
 		c.camera.pos = c.camera.pos.Add(c.camera.front.Normalize().Cross(c.camera.up).Mul(c.camera.speed))
 	}
 
-	width, height := window.GetSize()
+	width, height := app.GetWindow().GetGLFWWindow().GetSize()
 	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(width)/float32(height), 0.1, 10.0)
 	camera := mgl32.LookAtV(c.camera.pos, c.camera.pos.Add(c.camera.front), c.camera.up)
 	model := mgl32.Ident4()

@@ -3,8 +3,8 @@ package main
 import (
 	"runtime"
 
+	"github.com/devodev/opengl-experimentation/internal/engine"
 	"github.com/devodev/opengl-experimentation/internal/engine/application"
-	"github.com/devodev/opengl-experimentation/internal/engine/components"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 }
 
 func main() {
-	logger := application.NewLogger()
+	logger := engine.NewLogger()
 	app, err := application.New(application.WithLoggerOption(logger))
 	if err != nil {
 		logger.Errorf("error creating application: %s", err)
@@ -27,13 +27,12 @@ func main() {
 		}
 	}()
 
-	// square, err := components.NewSquare()
-	squareTexture, err := components.NewSquareTexture()
+	squareTextureLayer, err := NewSquareTexture()
 	if err != nil {
-		logger.Errorf("error creating application: %s", err)
+		logger.Errorf("error creating layer: %s", err)
 		return
 	}
-	app.AddComponent(squareTexture)
+	app.AddLayer(squareTextureLayer)
 
 	if err := app.Run(); err != nil {
 		logger.Errorf("error running application: %s", err)
