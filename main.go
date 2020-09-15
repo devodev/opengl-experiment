@@ -23,7 +23,9 @@ func main() {
 	}
 	defer func() {
 		if err := app.Close(); err != nil {
-			logger.Errorf("error closing application: %s", err)
+			if err != application.ErrAlreadyClosed {
+				logger.Errorf("error closing application: %s", err)
+			}
 		}
 	}()
 

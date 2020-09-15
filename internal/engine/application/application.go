@@ -1,6 +1,7 @@
 package application
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/devodev/opengl-experimentation/internal/engine"
@@ -9,6 +10,11 @@ import (
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+)
+
+// Errors
+var (
+	ErrAlreadyClosed = errors.New("application already closed")
 )
 
 // Application needs to be used exclusively
@@ -38,7 +44,6 @@ func New(options ...Option) (*Application, error) {
 		return nil, err
 	}
 	app := &Application{
-		running:  true,
 		window:   window,
 		renderer: renderer,
 		logger:   engine.NewLogger(),
@@ -56,9 +61,7 @@ func New(options ...Option) (*Application, error) {
 
 // Run .
 func (a *Application) Run() error {
-	if !a.running {
-		return fmt.Errorf("application is closed")
-	}
+	a.running = true
 
 	// init components
 	for _, layer := range a.layers {
@@ -66,7 +69,7 @@ func (a *Application) Run() error {
 	}
 
 	// main loop
-	for !a.isAlive() {
+	for a.running {
 		a.renderer.Clear()
 		for _, layer := range a.layers {
 			layer.OnUpdate(a)
@@ -79,13 +82,18 @@ func (a *Application) Run() error {
 // Close .
 func (a *Application) Close() error {
 	if !a.running {
-		return fmt.Errorf("already closed")
+		return ErrAlreadyClosed
 	}
-	a.running = false
+	a.RequestClose()
 	if err := a.window.Close(); err != nil {
 		return err
 	}
 	return nil
+}
+
+// RequestClose .
+func (a *Application) RequestClose() {
+	a.running = false
 }
 
 // AddLayer .
@@ -111,11 +119,11 @@ func (a *Application) GetWindow() *window.Window {
 	return a.window
 }
 
-func (a *Application) isAlive() bool {
-	return a.window.ShouldClose()
-}
-
 func (a *Application) onUpdate() {
+	if a.window.ShouldClose() {
+		a.RequestClose()
+		return
+	}
 	glfw.PollEvents()
 	a.window.GetGLFWWindow().SwapBuffers()
 }

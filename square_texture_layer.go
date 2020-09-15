@@ -103,7 +103,8 @@ func (c *SquareTexture) OnInit(app *application.Application) {
 		}
 		// close window
 		if key == glfw.KeyEscape && action != glfw.Release {
-			w.SetShouldClose(true)
+			app.RequestClose()
+			return
 		}
 		// toggle wireframes
 		if key == glfw.KeySpace && action == glfw.Press {
