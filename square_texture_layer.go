@@ -11,11 +11,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-var (
-	deltaTime = float64(0)
-	lastFrame = float64(0)
-)
-
 // camera movements
 var (
 	movingForward  = false
@@ -133,11 +128,7 @@ func (c *SquareTexture) OnInit(app *application.Application) {
 }
 
 // OnUpdate .
-func (c *SquareTexture) OnUpdate(app *application.Application) {
-	currentTime := glfw.GetTime()
-	deltaTime = currentTime - lastFrame
-	lastFrame = currentTime
-
+func (c *SquareTexture) OnUpdate(app *application.Application, deltaTime float64) {
 	c.camera.speed = float32(2 * deltaTime)
 
 	if movingForward {

@@ -68,11 +68,17 @@ func (a *Application) Run() error {
 		layer.OnInit(a)
 	}
 
+	lastFrame := float64(0)
+
 	// main loop
 	for a.running {
+		currentTime := glfw.GetTime()
+		deltaTime := currentTime - lastFrame
+		lastFrame = currentTime
+
 		a.renderer.Clear()
 		for _, layer := range a.layers {
-			layer.OnUpdate(a)
+			layer.OnUpdate(a, deltaTime)
 		}
 		a.onUpdate()
 	}
@@ -117,6 +123,11 @@ func (a *Application) init() error {
 // GetWindow .
 func (a *Application) GetWindow() *window.Window {
 	return a.window
+}
+
+// GetRenderer .
+func (a *Application) GetRenderer() *renderer.Renderer {
+	return a.renderer
 }
 
 func (a *Application) onUpdate() {
