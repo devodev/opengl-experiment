@@ -45,6 +45,10 @@ func (c *Camera) OnUpdate(app *Application, deltaTime float64) {
 	c.speed = float32(2 * deltaTime)
 
 	glfwWindow := app.GetWindow().GetGLFWWindow()
+	if glfwWindow.GetAttrib(glfw.Focused) == glfw.False {
+		return
+	}
+
 	if !(glfwWindow.GetKey(glfw.KeyW) == glfw.Release) {
 		c.pos = c.pos.Add(c.front.Mul(c.speed))
 	}
