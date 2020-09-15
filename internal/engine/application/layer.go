@@ -4,4 +4,5 @@ package application
 type Layer interface {
 	OnInit(*Application)
 	OnUpdate(*Application, float64)
+	OnRender(*Application, float64)
 }

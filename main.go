@@ -29,7 +29,7 @@ func main() {
 		}
 	}()
 
-	squareTextureLayer, err := NewSquareTexture()
+	squareTextureLayer, err := NewSquareTexture(app)
 	if err != nil {
 		logger.Errorf("error creating layer: %s", err)
 		return

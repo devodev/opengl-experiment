@@ -68,7 +68,7 @@ func (a *Application) Run() error {
 		layer.OnInit(a)
 	}
 
-	lastFrame := float64(0)
+	var lastFrame float64
 
 	// main loop
 	for a.running {
@@ -79,6 +79,7 @@ func (a *Application) Run() error {
 		a.renderer.Clear()
 		for _, layer := range a.layers {
 			layer.OnUpdate(a, deltaTime)
+			layer.OnRender(a, deltaTime)
 		}
 		a.onUpdate()
 	}
