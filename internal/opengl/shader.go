@@ -2,7 +2,6 @@ package opengl
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -14,31 +13,15 @@ type ShaderProgram struct {
 	uniformLocations map[string]int32
 }
 
-// NewShaderProgram .
-func NewShaderProgram(vertexShaderFilepath, fragmentShaderFilepath string) (*ShaderProgram, error) {
-	// TODO: we might want to only create an empty program on init
-	// TODO: and provide methods for attaching shaders.
-
-	// read files into memory
-	// this might need to be put in a helper function
-	// or provide another constructor using strings directly
-	vertexShaderSource, err := ioutil.ReadFile(vertexShaderFilepath)
-	if err != nil {
-		return nil, err
-	}
-	fragmentShaderSource, err := ioutil.ReadFile(fragmentShaderFilepath)
-	if err != nil {
-		return nil, err
-	}
-	vertexShaderSource = append(vertexShaderSource, byte('\x00'))
-	fragmentShaderSource = append(fragmentShaderSource, byte('\x00'))
-
+// NewShaderProgram requires that both vertex and fragment shader
+// sources be null terminated strings.
+func NewShaderProgram(vertexShaderSource, fragmentShaderSource string) (*ShaderProgram, error) {
 	// compile shaders
-	vertexShader, err := compileShader(string(vertexShaderSource), gl.VERTEX_SHADER)
+	vertexShader, err := compileShader(vertexShaderSource, gl.VERTEX_SHADER)
 	if err != nil {
 		return nil, fmt.Errorf("could not compile vertex shader: %s", err)
 	}
-	fragmentShader, err := compileShader(string(fragmentShaderSource), gl.FRAGMENT_SHADER)
+	fragmentShader, err := compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
 	if err != nil {
 		return nil, fmt.Errorf("could not compile fragment shader: %s", err)
 	}

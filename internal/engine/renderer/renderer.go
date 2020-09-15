@@ -46,10 +46,9 @@ func (r *Renderer) Init() error {
 	r.setBlending()
 
 	// initialize quad data
-	shaderProgram, err := opengl.NewShaderProgram(
-		"assets/shaders/vertexTexture.glsl",
-		"assets/shaders/fragmentTexture.glsl",
-	)
+	quadVertexShaderSource := string(append([]byte(quadVertexShader), byte('\x00')))
+	quadFragmentShaderSource := string(append([]byte(quadFragmentShader), byte('\x00')))
+	shaderProgram, err := opengl.NewShaderProgram(quadVertexShaderSource, quadFragmentShaderSource)
 	if err != nil {
 		return err
 	}
