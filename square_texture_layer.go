@@ -32,19 +32,14 @@ func NewSquareTexture(app *application.Application) (*SquareTexture, error) {
 
 	square := []float32{
 		// position(vec2), texCoord(vec2)
-		-0.5, 0, 0, 1,
+		-0.5, 0.5, 0, 1,
 		-0.5, -0.5, 0, 0,
-		0, -0.5, 1, 0,
-		0, 0, 1, 1,
-
-		0, 0.5, 0, 1,
-		0, 0, 0, 0,
-		0.5, 0, 1, 0,
+		0.5, -0.5, 1, 0,
 		0.5, 0.5, 1, 1,
 	}
 	squareIndices := []uint32{
-		0, 1, 2, 2, 3, 0,
-		4, 5, 6, 6, 7, 4,
+		0, 1, 2,
+		2, 3, 0,
 	}
 
 	vbo, err := opengl.NewVBO(square, opengl.FLOAT)
