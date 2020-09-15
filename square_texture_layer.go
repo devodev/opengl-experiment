@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"github.com/devodev/opengl-experimentation/internal/engine/application"
+	"github.com/devodev/opengl-experimentation/internal/engine/renderer"
 	"github.com/devodev/opengl-experimentation/internal/opengl"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 // SquareTexture .
 type SquareTexture struct {
 	texture *opengl.Texture
-	camera  *application.Camera
+	camera  *renderer.Camera
 }
 
 // NewSquareTexture .
@@ -25,7 +25,7 @@ func NewSquareTexture(app *application.Application) (*SquareTexture, error) {
 	}
 
 	width, height := app.GetWindow().GetGLFWWindow().GetSize()
-	camera := application.NewCamera(width, height)
+	camera := renderer.NewCamera(width, height)
 
 	component := &SquareTexture{
 		texture: texture,
@@ -41,16 +41,14 @@ func (c *SquareTexture) OnInit(app *application.Application) {
 // OnUpdate .
 func (c *SquareTexture) OnUpdate(app *application.Application, deltaTime float64) {
 	c.processInput(app)
-	c.camera.OnUpdate(app, deltaTime)
+	c.camera.OnUpdate(app.GetWindow().GetGLFWWindow(), deltaTime)
 }
 
 // OnRender .
 func (c *SquareTexture) OnRender(app *application.Application, deltaTime float64) {
-	vp := c.camera.GetViewProjectionMatrix()
-	model := mgl32.Ident4()
-	mvp := vp.Mul4(model)
-
-	app.GetRenderer().DrawQuad(mvp, c.texture)
+	app.GetRenderer().Begin(c.camera)
+	app.GetRenderer().DrawQuad(c.texture)
+	app.GetRenderer().End()
 }
 
 func (c *SquareTexture) processInput(app *application.Application) {

@@ -1,80 +1,63 @@
 package opengl
 
 import (
-	"fmt"
+	"unsafe"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
+// GLDataTypes
 var (
-	glDataTypes = map[uint32]*GlDataType{
-		gl.FLOAT: {
-			name:  "FLOAT",
-			size:  4,
-			value: gl.FLOAT,
-		},
+	GLDataTypeFloat = GLDataType{
+		name:  "FLOAT",
+		size:  4,
+		value: gl.FLOAT,
 	}
 )
 
-// GlDataType .
-type GlDataType struct {
+// GLDataType .
+type GLDataType struct {
 	name  string
 	size  int
 	value uint32
 }
 
-// GetGlDataType .
-func GetGlDataType(dataType uint32) (*GlDataType, error) {
-	glDataType, ok := glDataTypes[dataType]
-	if !ok {
-		return nil, fmt.Errorf("invalid VBO data type of value: %v", dataType)
-	}
-	return glDataType, nil
-}
-
 // VBO .
 type VBO struct {
-	id       uint32
-	stride   int32
-	dataType *GlDataType
-	data     interface{}
-	elements []*VBOElement
+	id     uint32
+	layout *VBOLayout
 }
 
 // NewVBO .
-func NewVBO(data interface{}, dataType uint32) (*VBO, error) {
-	glDataType, err := GetGlDataType(dataType)
-	if err != nil {
-		return nil, err
-	}
-
+func NewVBO(size int) (*VBO, error) {
 	var vboID uint32
 	gl.GenBuffers(1, &vboID)
-	vbo := &VBO{id: vboID, dataType: glDataType, data: data}
+	vbo := &VBO{id: vboID}
 
 	vbo.Bind()
 	defer vbo.Unbind()
 
-	// hardcoded as float32 for now until I figure out
-	// how to handle this correctly.
-	realData := data.([]float32)
-	gl.BufferData(gl.ARRAY_BUFFER, glDataType.size*len(realData), gl.Ptr(realData), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, size, gl.Ptr(nil), gl.DYNAMIC_DRAW)
 
 	return vbo, nil
 }
 
-// AddElement .
-func (v *VBO) AddElement(count int32, normalized bool) {
-	v.elements = append(v.elements, NewVBOElement(count, normalized))
+// SetData .
+func (v *VBO) SetData(data VBOData) {
+	v.Bind()
+	defer v.Unbind()
+
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, data.GetSize(), data.GetGLPtr())
 }
 
-// GetStride .
-func (v *VBO) GetStride() int32 {
-	stride := int32(0)
-	for _, element := range v.elements {
-		stride += (int32(v.dataType.size) * element.count)
-	}
-	return stride
+// GetLayout .
+func (v *VBO) GetLayout() *VBOLayout {
+	return v.layout
+}
+
+// SetLayout .
+func (v *VBO) SetLayout(layout *VBOLayout) {
+	v.layout = layout
 }
 
 // Bind .
@@ -87,16 +70,36 @@ func (v *VBO) Unbind() {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
-// VBOElement .
-type VBOElement struct {
-	count      int32
-	normalized bool
+// VBOLayout .
+type VBOLayout struct {
+	stride   int32
+	elements []VBOLayoutElement
 }
 
-// NewVBOElement .
-func NewVBOElement(count int32, normalized bool) *VBOElement {
-	return &VBOElement{
-		count:      count,
-		normalized: normalized,
+// NewVBOLayout .
+func NewVBOLayout(elements ...VBOLayoutElement) *VBOLayout {
+	layout := &VBOLayout{}
+	for _, e := range elements {
+		layout.elements = append(layout.elements, e)
+		layout.stride += (int32(e.DataType.size) * e.Count)
 	}
+	return layout
+}
+
+// GetStride .
+func (l *VBOLayout) GetStride() int32 {
+	return l.stride
+}
+
+// VBOLayoutElement .
+type VBOLayoutElement struct {
+	Count      int32
+	Normalized bool
+	DataType   GLDataType
+}
+
+// VBOData .
+type VBOData interface {
+	GetGLPtr() unsafe.Pointer
+	GetSize() int
 }

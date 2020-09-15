@@ -39,7 +39,7 @@ func New(options ...Option) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	renderer, err := renderer.New(window)
+	renderer, err := renderer.New()
 	if err != nil {
 		return nil, err
 	}

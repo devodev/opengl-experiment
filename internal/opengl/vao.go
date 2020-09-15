@@ -4,7 +4,8 @@ import "github.com/go-gl/gl/v4.6-core/gl"
 
 // VAO .
 type VAO struct {
-	id uint32
+	id  uint32
+	ibo *IBO
 }
 
 // NewVAO .
@@ -22,12 +23,29 @@ func (v *VAO) AddVBO(vbo *VBO) {
 	vbo.Bind()
 	defer vbo.Unbind()
 
+	layout := vbo.GetLayout()
+
 	offset := 0
-	for idx, element := range vbo.elements {
-		gl.VertexAttribPointer(uint32(idx), element.count, vbo.dataType.value, element.normalized, vbo.GetStride(), gl.PtrOffset(offset))
+	for idx, element := range layout.elements {
+		gl.VertexAttribPointer(uint32(idx), element.Count, element.DataType.value, element.Normalized, layout.GetStride(), gl.PtrOffset(offset))
 		gl.EnableVertexAttribArray(uint32(idx))
-		offset += (vbo.dataType.size * int(element.count))
+		offset += (element.DataType.size * int(element.Count))
 	}
+}
+
+// SetIBO .
+func (v *VAO) SetIBO(ibo *IBO) {
+	v.Bind()
+	ibo.Bind()
+	v.Unbind()
+	ibo.Unbind()
+
+	v.ibo = ibo
+}
+
+// GetIBO .
+func (v *VAO) GetIBO() *IBO {
+	return v.ibo
 }
 
 // Bind .

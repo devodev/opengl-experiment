@@ -1,4 +1,4 @@
-package application
+package renderer
 
 import (
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -41,10 +41,9 @@ func NewCamera(width, height int) *Camera {
 }
 
 // OnUpdate .
-func (c *Camera) OnUpdate(app *Application, deltaTime float64) {
+func (c *Camera) OnUpdate(glfwWindow *glfw.Window, deltaTime float64) {
 	c.speed = float32(2 * deltaTime)
 
-	glfwWindow := app.GetWindow().GetGLFWWindow()
 	if glfwWindow.GetAttrib(glfw.Focused) == glfw.False {
 		return
 	}
@@ -62,7 +61,7 @@ func (c *Camera) OnUpdate(app *Application, deltaTime float64) {
 		c.pos = c.pos.Add(c.front.Normalize().Cross(c.up).Mul(c.speed))
 	}
 
-	width, height := app.GetWindow().GetGLFWWindow().GetSize()
+	width, height := glfwWindow.GetSize()
 	c.projectionMatrix = mgl32.Perspective(mgl32.DegToRad(45.0), float32(width)/float32(height), 0.1, 10.0)
 	c.viewMatrix = mgl32.LookAtV(c.pos, c.pos.Add(c.front), c.up)
 	c.viewProjectionMatrix = c.projectionMatrix.Mul4(c.viewMatrix)

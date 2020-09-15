@@ -8,10 +8,10 @@ layout (location = 1) in vec2 texCoord;
 
 out vec2 fragTexCoord;
 
-uniform mat4 mvp;
+uniform mat4 vp;
 
 void main() {
-    gl_Position = mvp * vec4(position, 0.0, 1.0);
+    gl_Position = vp * vec4(position, 0.0, 1.0);
     fragTexCoord = texCoord;
 }
     `
