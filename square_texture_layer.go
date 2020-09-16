@@ -47,7 +47,7 @@ func (c *SquareTexture) OnUpdate(app *application.Application, deltaTime float64
 // OnRender .
 func (c *SquareTexture) OnRender(app *application.Application, deltaTime float64) {
 	app.GetRenderer().Begin(c.camera)
-	app.GetRenderer().DrawQuad(c.texture)
+	app.GetRenderer().DrawTexturedQuad(c.texture)
 	app.GetRenderer().End()
 }
 

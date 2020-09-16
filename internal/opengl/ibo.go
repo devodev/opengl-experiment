@@ -1,6 +1,10 @@
 package opengl
 
-import "github.com/go-gl/gl/v4.6-core/gl"
+import (
+	"unsafe"
+
+	"github.com/go-gl/gl/v4.6-core/gl"
+)
 
 // IBO .
 type IBO struct {
@@ -9,17 +13,26 @@ type IBO struct {
 }
 
 // NewIBO .
-func NewIBO(indices []uint32) *IBO {
+func NewIBO(count int) *IBO {
 	var iboID uint32
 	gl.GenBuffers(1, &iboID)
-	ibo := &IBO{id: iboID, count: int32(len(indices))}
+	ibo := &IBO{id: iboID, count: int32(count)}
 
 	ibo.Bind()
 	defer ibo.Unbind()
 
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 4*len(indices), gl.Ptr(indices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 4*count, nil, gl.DYNAMIC_DRAW)
 
 	return ibo
+}
+
+// SetData .
+func (v *IBO) SetData(data IBOData) {
+	v.Bind()
+	defer v.Unbind()
+
+	v.count = data.GetIBOCount()
+	gl.BufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, 4*int(v.count), data.GetIBOGLPtr())
 }
 
 // Bind .
@@ -35,4 +48,10 @@ func (v *IBO) Unbind() {
 // GetCount .
 func (v *IBO) GetCount() int32 {
 	return v.count
+}
+
+// IBOData .
+type IBOData interface {
+	GetIBOGLPtr() unsafe.Pointer
+	GetIBOCount() int32
 }

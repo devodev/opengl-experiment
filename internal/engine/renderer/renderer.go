@@ -33,13 +33,20 @@ type Renderer struct {
 	backgroundColor color.RGBA
 
 	quadVertexArray   *opengl.VAO
+	quadVertexBuffer  *opengl.VBO
 	quadShaderProgram *opengl.ShaderProgram
+
+	quadData *QuadData
 }
 
 // New .
 func New() (*Renderer, error) {
 	r := &Renderer{
 		backgroundColor: defaultBackgroundColor,
+		quadData: &QuadData{
+			Vertices: make([]QuadVertex, 0, maxVertices),
+			Indices:  make([]uint32, 0, maxIndices),
+		},
 	}
 	return r, nil
 }
@@ -63,47 +70,23 @@ func (r *Renderer) Init() error {
 		return err
 	}
 
-	squareIndices := []uint32{
-		0, 1, 2,
-		2, 3, 0,
-	}
-
-	quadVBOData := &QuadVBOData{
-		Vertices: []QuadVertex{
-			QuadVertex{
-				Position: mgl32.Vec2{-0.5, 0.5},
-				TexCoord: mgl32.Vec2{0, 1},
-			},
-			QuadVertex{
-				Position: mgl32.Vec2{-0.5, -0.5},
-				TexCoord: mgl32.Vec2{0, 0},
-			},
-			QuadVertex{
-				Position: mgl32.Vec2{0.5, -0.5},
-				TexCoord: mgl32.Vec2{1, 0},
-			},
-			QuadVertex{
-				Position: mgl32.Vec2{0.5, 0.5},
-				TexCoord: mgl32.Vec2{1, 1},
-			},
-		},
-	}
-	vbo, err := opengl.NewVBO(maxVertices * quadVBOData.GetVertexSize())
+	vbo, err := opengl.NewVBO(maxVertices * r.quadData.GetVertexSize())
 	if err != nil {
 		return err
 	}
-	vbo.SetData(quadVBOData)
 	vbo.SetLayout(opengl.NewVBOLayout(
 		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
 		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
 	))
-	ibo := opengl.NewIBO(squareIndices)
+
+	ibo := opengl.NewIBO(maxIndices)
 
 	vao := opengl.NewVAO()
 	vao.AddVBO(vbo)
 	vao.SetIBO(ibo)
 
 	r.quadVertexArray = vao
+	r.quadVertexBuffer = vbo
 	r.quadShaderProgram = shaderProgram
 
 	return nil
@@ -123,6 +106,11 @@ func (r *Renderer) Clear() {
 
 // Begin .
 func (r *Renderer) Begin(camera *Camera) {
+	r.quadData = &QuadData{
+		Vertices: make([]QuadVertex, 0, maxVertices),
+		Indices:  make([]uint32, 0, maxIndices),
+	}
+
 	r.quadShaderProgram.Bind()
 	defer r.quadShaderProgram.Unbind()
 
@@ -132,23 +120,27 @@ func (r *Renderer) Begin(camera *Camera) {
 
 // End .
 func (r *Renderer) End() {
-}
+	r.quadVertexBuffer.SetData(r.quadData)
+	r.quadVertexArray.GetIBO().SetData(r.quadData)
 
-// DrawQuad .
-func (r *Renderer) DrawQuad(texture *opengl.Texture) {
 	r.quadShaderProgram.Bind()
-	r.quadShaderProgram.SetUniform1i("tex", int32(texture.GetTextureUnit()-gl.TEXTURE0))
-
-	texture.Bind()
 	r.quadVertexArray.Bind()
+	r.quadData.Texture.Bind()
 	defer func() {
-		r.quadShaderProgram.Unbind()
-		texture.Unbind()
 		r.quadVertexArray.Unbind()
+		r.quadShaderProgram.Unbind()
+		r.quadData.Texture.Unbind()
 	}()
 
+	r.quadShaderProgram.SetUniform1i("tex", int32(r.quadData.Texture.GetTextureUnit()-gl.TEXTURE0))
+
 	count := r.quadVertexArray.GetIBO().GetCount()
-	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.TRIANGLES, int32(count), gl.UNSIGNED_INT, nil)
+}
+
+// DrawTexturedQuad .
+func (r *Renderer) DrawTexturedQuad(texture *opengl.Texture) {
+	r.quadData.AddQuad(texture)
 }
 
 func (r *Renderer) setDebugging() {
@@ -183,29 +175,75 @@ func (r *Renderer) setBlending() {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 }
 
-// QuadVBOData .
-type QuadVBOData struct {
-	Vertices []QuadVertex
-}
-
-// GetGLPtr .
-func (d *QuadVBOData) GetGLPtr() unsafe.Pointer {
-	return gl.Ptr(d.Vertices)
-}
-
-// GetVertexSize .
-func (d *QuadVBOData) GetVertexSize() int {
-	var quadVertex QuadVertex
-	return int(unsafe.Sizeof(quadVertex))
-}
-
-// GetSize .
-func (d *QuadVBOData) GetSize() int {
-	return d.GetVertexSize() * len(d.Vertices)
-}
-
 // QuadVertex .
 type QuadVertex struct {
 	Position mgl32.Vec2
 	TexCoord mgl32.Vec2
+}
+
+// QuadData .
+type QuadData struct {
+	Vertices []QuadVertex
+	Indices  []uint32
+	Texture  *opengl.Texture
+}
+
+// AddQuad .
+func (d *QuadData) AddQuad(texture *opengl.Texture) {
+	quad := []QuadVertex{
+		QuadVertex{
+			Position: mgl32.Vec2{-0.5, 0.5},
+			TexCoord: mgl32.Vec2{0, 1},
+		},
+		QuadVertex{
+			Position: mgl32.Vec2{-0.5, -0.5},
+			TexCoord: mgl32.Vec2{0, 0},
+		},
+		QuadVertex{
+			Position: mgl32.Vec2{0.5, -0.5},
+			TexCoord: mgl32.Vec2{1, 0},
+		},
+		QuadVertex{
+			Position: mgl32.Vec2{0.5, 0.5},
+			TexCoord: mgl32.Vec2{1, 1},
+		},
+	}
+	d.Vertices = append(d.Vertices, quad...)
+	quadOffset := len(d.Vertices) - 4
+	indices := []uint32{
+		uint32(quadOffset + 0),
+		uint32(quadOffset + 1),
+		uint32(quadOffset + 2),
+		uint32(quadOffset + 2),
+		uint32(quadOffset + 3),
+		uint32(quadOffset + 0),
+	}
+	d.Indices = append(d.Indices, indices...)
+	d.Texture = texture
+}
+
+// GetVBOGLPtr .
+func (d *QuadData) GetVBOGLPtr() unsafe.Pointer {
+	return gl.Ptr(d.Vertices)
+}
+
+// GetVBOSize .
+func (d *QuadData) GetVBOSize() int {
+	return d.GetVertexSize() * len(d.Vertices)
+}
+
+// GetVertexSize .
+func (d *QuadData) GetVertexSize() int {
+	var quadVertex QuadVertex
+	return int(unsafe.Sizeof(quadVertex))
+}
+
+// GetIBOGLPtr .
+func (d *QuadData) GetIBOGLPtr() unsafe.Pointer {
+	return gl.Ptr(d.Indices)
+}
+
+// GetIBOCount .
+func (d *QuadData) GetIBOCount() int32 {
+	return int32(len(d.Indices))
 }

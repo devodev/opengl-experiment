@@ -47,7 +47,7 @@ func (v *VBO) SetData(data VBOData) {
 	v.Bind()
 	defer v.Unbind()
 
-	gl.BufferSubData(gl.ARRAY_BUFFER, 0, data.GetSize(), data.GetGLPtr())
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, data.GetVBOSize(), data.GetVBOGLPtr())
 }
 
 // GetLayout .
@@ -100,6 +100,7 @@ type VBOLayoutElement struct {
 
 // VBOData .
 type VBOData interface {
-	GetGLPtr() unsafe.Pointer
-	GetSize() int
+	GetVBOGLPtr() unsafe.Pointer
+	GetVBOSize() int
+	GetVertexSize() int
 }
