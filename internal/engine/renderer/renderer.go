@@ -3,6 +3,7 @@ package renderer
 import (
 	"fmt"
 	"image/color"
+	"strings"
 	"unsafe"
 
 	"github.com/devodev/opengl-experimentation/internal/opengl"
@@ -19,6 +20,13 @@ var (
 	maxVertices = maxQuads * 4
 	maxIndices  = maxQuads * 6
 )
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
 
 // Renderer .
 type Renderer struct {
@@ -44,7 +52,7 @@ func (r *Renderer) Init() error {
 		return fmt.Errorf("error initializing OpenGL: %s", err)
 	}
 
-	// set blending function
+	r.setDebugging()
 	r.setBlending()
 
 	// initialize quad data
@@ -141,6 +149,33 @@ func (r *Renderer) DrawQuad(texture *opengl.Texture) {
 
 	count := r.quadVertexArray.GetIBO().GetCount()
 	gl.DrawElements(gl.TRIANGLES, count, gl.UNSIGNED_INT, nil)
+}
+
+func (r *Renderer) setDebugging() {
+	gl.Enable(gl.DEBUG_OUTPUT)
+	gl.DebugMessageCallback(func(
+		source uint32,
+		gltype uint32,
+		id uint32,
+		severity uint32,
+		length int32,
+		message string,
+		userParam unsafe.Pointer) {
+
+		fmt.Println("[OpenGL DEBUG]")
+		fmt.Printf("[OpenGL DEBUG]\tsource (0x%x): %v\n", source, strings.Join(opengl.GlEnums[source], ", "))
+		fmt.Printf("[OpenGL DEBUG]\tgltype (0x%x): %v\n", gltype, strings.Join(opengl.GlEnums[gltype], ", "))
+		fmt.Printf("[OpenGL DEBUG]\tseverity (0x%x): %v\n", severity, strings.Join(opengl.GlEnums[severity], ", "))
+		fmt.Printf("[OpenGL DEBUG]\tid: %v\n", id)
+		fmt.Println("[OpenGL DEBUG]\tmessage:")
+		lineLen := 90
+		msgIdx := 0
+		for msgIdx < len(message) {
+			fmt.Printf("[OpenGL DEBUG]\t\t%v\n", strings.TrimLeft(message[msgIdx:min(msgIdx+lineLen, len(message))], "  "))
+			msgIdx += lineLen
+		}
+		fmt.Println("[OpenGL DEBUG]")
+	}, nil)
 }
 
 func (r *Renderer) setBlending() {
