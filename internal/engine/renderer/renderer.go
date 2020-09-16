@@ -140,7 +140,7 @@ func (r *Renderer) End() {
 
 // DrawTexturedQuad .
 func (r *Renderer) DrawTexturedQuad(texture *opengl.Texture) {
-	r.quadData.AddQuad(texture)
+	r.quadData.AddTexturedQuad(texture)
 }
 
 func (r *Renderer) setDebugging() {
@@ -188,8 +188,8 @@ type QuadData struct {
 	Texture  *opengl.Texture
 }
 
-// AddQuad .
-func (d *QuadData) AddQuad(texture *opengl.Texture) {
+// AddTexturedQuad .
+func (d *QuadData) AddTexturedQuad(texture *opengl.Texture) {
 	quad := []QuadVertex{
 		QuadVertex{
 			Position: mgl32.Vec2{-0.5, 0.5},

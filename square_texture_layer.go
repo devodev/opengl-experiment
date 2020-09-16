@@ -11,14 +11,14 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
-// SquareTexture .
-type SquareTexture struct {
+// SquareTextureLayer .
+type SquareTextureLayer struct {
 	texture *opengl.Texture
 	camera  *renderer.Camera
 }
 
-// NewSquareTexture .
-func NewSquareTexture(app *application.Application) (*SquareTexture, error) {
+// NewSquareTextureLayer .
+func NewSquareTextureLayer(app *application.Application) (*SquareTextureLayer, error) {
 	texture, err := opengl.NewTexture("assets/textures/google_logo.png", 1)
 	if err != nil {
 		return nil, fmt.Errorf("error creating texture: %s", err)
@@ -27,7 +27,7 @@ func NewSquareTexture(app *application.Application) (*SquareTexture, error) {
 	width, height := app.GetWindow().GetGLFWWindow().GetSize()
 	camera := renderer.NewCamera(width, height)
 
-	component := &SquareTexture{
+	component := &SquareTextureLayer{
 		texture: texture,
 		camera:  camera,
 	}
@@ -35,23 +35,23 @@ func NewSquareTexture(app *application.Application) (*SquareTexture, error) {
 }
 
 // OnInit .
-func (c *SquareTexture) OnInit(app *application.Application) {
+func (c *SquareTextureLayer) OnInit(app *application.Application) {
 }
 
 // OnUpdate .
-func (c *SquareTexture) OnUpdate(app *application.Application, deltaTime float64) {
+func (c *SquareTextureLayer) OnUpdate(app *application.Application, deltaTime float64) {
 	c.processInput(app)
 	c.camera.OnUpdate(app.GetWindow().GetGLFWWindow(), deltaTime)
 }
 
 // OnRender .
-func (c *SquareTexture) OnRender(app *application.Application, deltaTime float64) {
+func (c *SquareTextureLayer) OnRender(app *application.Application, deltaTime float64) {
 	app.GetRenderer().Begin(c.camera)
 	app.GetRenderer().DrawTexturedQuad(c.texture)
 	app.GetRenderer().End()
 }
 
-func (c *SquareTexture) processInput(app *application.Application) {
+func (c *SquareTextureLayer) processInput(app *application.Application) {
 	glfwWindow := app.GetWindow().GetGLFWWindow()
 	// we lost focus, dont process synthetic events
 	if glfwWindow.GetAttrib(glfw.Focused) == glfw.False {
