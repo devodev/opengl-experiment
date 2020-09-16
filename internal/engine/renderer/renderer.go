@@ -14,6 +14,12 @@ var (
 	defaultBackgroundColor = color.RGBA{51, 75, 75, 1}
 )
 
+var (
+	maxQuads    = 10000
+	maxVertices = maxQuads * 4
+	maxIndices  = maxQuads * 6
+)
+
 // Renderer .
 type Renderer struct {
 	backgroundColor color.RGBA
@@ -52,8 +58,6 @@ func (r *Renderer) Init() error {
 	squareIndices := []uint32{
 		0, 1, 2,
 		2, 3, 0,
-		4, 5, 6,
-		6, 7, 4,
 	}
 
 	quadVBOData := &QuadVBOData{
@@ -76,7 +80,7 @@ func (r *Renderer) Init() error {
 			},
 		},
 	}
-	vbo, err := opengl.NewVBO(quadVBOData.GetSize())
+	vbo, err := opengl.NewVBO(maxVertices * quadVBOData.GetVertexSize())
 	if err != nil {
 		return err
 	}
@@ -154,11 +158,15 @@ func (d *QuadVBOData) GetGLPtr() unsafe.Pointer {
 	return gl.Ptr(d.Vertices)
 }
 
+// GetVertexSize .
+func (d *QuadVBOData) GetVertexSize() int {
+	var quadVertex QuadVertex
+	return int(unsafe.Sizeof(quadVertex))
+}
+
 // GetSize .
 func (d *QuadVBOData) GetSize() int {
-	var quadVertex QuadVertex
-	size := unsafe.Sizeof(quadVertex)
-	return int(size) * len(d.Vertices)
+	return d.GetVertexSize() * len(d.Vertices)
 }
 
 // QuadVertex .
