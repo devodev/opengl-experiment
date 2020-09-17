@@ -20,7 +20,7 @@ type Camera struct {
 // NewCamera .
 func NewCamera(width, height int) *Camera {
 	posVec3 := mgl32.Vec3{0, 0, 2}
-	frontVec3 := mgl32.Vec3{0, 0, -1}
+	frontVec3 := mgl32.Vec3{0, 0, -0.5}
 	upVec3 := mgl32.Vec3{0, 1, 0}
 	speed := float32(0.05)
 

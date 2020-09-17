@@ -17,17 +17,18 @@ import (
 // Texture .
 type Texture struct {
 	id          uint32
+	index       int
 	textureUnit uint32
 }
 
 // NewTexture .
-func NewTexture(filepath string, textureUnit int) (*Texture, error) {
+func NewTexture(filepath string, index int) (*Texture, error) {
 	rgba, err := rgbaFromFile(filepath)
 	if err != nil {
 		return nil, err
 	}
-	if textureUnit < 0 {
-		return nil, fmt.Errorf("texture target out of bounds: %d != 0 <= x", textureUnit)
+	if index < 0 {
+		return nil, fmt.Errorf("texture target out of bounds: %d != 0 <= x", index)
 	}
 
 	var id uint32
@@ -35,7 +36,8 @@ func NewTexture(filepath string, textureUnit int) (*Texture, error) {
 
 	texture := &Texture{
 		id:          id,
-		textureUnit: uint32(gl.TEXTURE0 + textureUnit),
+		index:       index,
+		textureUnit: uint32(gl.TEXTURE0 + index),
 	}
 	texture.Bind()
 	defer texture.Unbind()
@@ -61,14 +63,26 @@ func NewTexture(filepath string, textureUnit int) (*Texture, error) {
 
 // Bind .
 func (t *Texture) Bind() {
+	fmt.Printf("BIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
 	gl.ActiveTexture(t.textureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
 }
 
 // Unbind .
 func (t *Texture) Unbind() {
+	fmt.Printf("UNBIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
 	gl.ActiveTexture(t.textureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
+}
+
+// GetID .
+func (t *Texture) GetID() uint32 {
+	return t.id
+}
+
+// GetIndex .
+func (t *Texture) GetIndex() int {
+	return t.index
 }
 
 // GetTextureUnit .

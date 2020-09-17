@@ -19,6 +19,8 @@ var (
 	maxQuads    = 10000
 	maxVertices = maxQuads * 4
 	maxIndices  = maxQuads * 6
+
+	maxTextures = 32
 )
 
 func min(a, b int) int {
@@ -44,6 +46,7 @@ func New() (*Renderer, error) {
 	r := &Renderer{
 		backgroundColor: defaultBackgroundColor,
 		quadData: &QuadData{
+			Textures: make(map[int]*opengl.Texture),
 			Vertices: make([]QuadVertex, 0, maxVertices),
 			Indices:  make([]uint32, 0, maxIndices),
 		},
@@ -75,8 +78,9 @@ func (r *Renderer) Init() error {
 		return err
 	}
 	vbo.SetLayout(opengl.NewVBOLayout(
+		opengl.VBOLayoutElement{Count: 4, Normalized: false, DataType: opengl.GLDataTypeFloat},
 		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
-		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
+		opengl.VBOLayoutElement{Count: 1, Normalized: false, DataType: opengl.GLDataTypeFloat},
 	))
 
 	ibo := opengl.NewIBO(maxIndices)
@@ -84,6 +88,14 @@ func (r *Renderer) Init() error {
 	vao := opengl.NewVAO()
 	vao.AddVBO(vbo)
 	vao.SetIBO(ibo)
+
+	samplers := make([]int32, maxTextures)
+	for i := 0; i < maxTextures; i++ {
+		samplers[i] = int32(i)
+	}
+	shaderProgram.Bind()
+	defer shaderProgram.Unbind()
+	shaderProgram.SetUniform1iv("tex", int32(len(samplers)), &samplers[0])
 
 	r.quadVertexArray = vao
 	r.quadVertexBuffer = vbo
@@ -107,6 +119,7 @@ func (r *Renderer) Clear() {
 // Begin .
 func (r *Renderer) Begin(camera *Camera) {
 	r.quadData = &QuadData{
+		Textures: make(map[int]*opengl.Texture),
 		Vertices: make([]QuadVertex, 0, maxVertices),
 		Indices:  make([]uint32, 0, maxIndices),
 	}
@@ -120,27 +133,37 @@ func (r *Renderer) Begin(camera *Camera) {
 
 // End .
 func (r *Renderer) End() {
+	// fmt.Printf("> End\n")
+	// fmt.Printf("\tVertices: %v\n", r.quadData.Vertices)
+	// fmt.Printf("\tIndices: %v\n", r.quadData.Indices)
+	fmt.Printf("\tTextures: %v\n", r.quadData.Textures)
 	r.quadVertexBuffer.SetData(r.quadData)
 	r.quadVertexArray.GetIBO().SetData(r.quadData)
 
+	for _, t := range r.quadData.Textures {
+		t.Bind()
+	}
 	r.quadShaderProgram.Bind()
 	r.quadVertexArray.Bind()
-	r.quadData.Texture.Bind()
+
 	defer func() {
+		for _, t := range r.quadData.Textures {
+			t.Unbind()
+		}
 		r.quadVertexArray.Unbind()
 		r.quadShaderProgram.Unbind()
-		r.quadData.Texture.Unbind()
 	}()
-
-	r.quadShaderProgram.SetUniform1i("tex", int32(r.quadData.Texture.GetTextureUnit()-gl.TEXTURE0))
 
 	count := r.quadVertexArray.GetIBO().GetCount()
 	gl.DrawElements(gl.TRIANGLES, int32(count), gl.UNSIGNED_INT, nil)
+	// fmt.Printf("< End\n")
 }
 
 // DrawTexturedQuad .
-func (r *Renderer) DrawTexturedQuad(texture *opengl.Texture) {
-	r.quadData.AddTexturedQuad(texture)
+func (r *Renderer) DrawTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture) {
+	if err := r.quadData.AddTexturedQuad(transform, texture); err != nil {
+		panic(err)
+	}
 }
 
 func (r *Renderer) setDebugging() {
@@ -177,39 +200,47 @@ func (r *Renderer) setBlending() {
 
 // QuadVertex .
 type QuadVertex struct {
-	Position mgl32.Vec2
+	Position mgl32.Vec4
 	TexCoord mgl32.Vec2
+	TexIndex float32
 }
 
 // QuadData .
 type QuadData struct {
+	Textures map[int]*opengl.Texture
 	Vertices []QuadVertex
 	Indices  []uint32
-	Texture  *opengl.Texture
 }
 
 // AddTexturedQuad .
-func (d *QuadData) AddTexturedQuad(texture *opengl.Texture) {
+func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture) error {
+	if err := d.addTexture(texture); err != nil {
+		return err
+	}
 	quad := []QuadVertex{
 		QuadVertex{
-			Position: mgl32.Vec2{-0.5, 0.5},
+			Position: transform.Mul4x1(mgl32.Vec4{-0.5, 0.5, 0.0, 1.0}),
 			TexCoord: mgl32.Vec2{0, 1},
+			TexIndex: float32(texture.GetIndex()),
 		},
 		QuadVertex{
-			Position: mgl32.Vec2{-0.5, -0.5},
+			Position: transform.Mul4x1(mgl32.Vec4{-0.5, -0.5, 0.0, 1.0}),
 			TexCoord: mgl32.Vec2{0, 0},
+			TexIndex: float32(texture.GetIndex()),
 		},
 		QuadVertex{
-			Position: mgl32.Vec2{0.5, -0.5},
+			Position: transform.Mul4x1(mgl32.Vec4{0.5, -0.5, 0.0, 1.0}),
 			TexCoord: mgl32.Vec2{1, 0},
+			TexIndex: float32(texture.GetIndex()),
 		},
 		QuadVertex{
-			Position: mgl32.Vec2{0.5, 0.5},
+			Position: transform.Mul4x1(mgl32.Vec4{0.5, 0.5, 0.0, 1.0}),
 			TexCoord: mgl32.Vec2{1, 1},
+			TexIndex: float32(texture.GetIndex()),
 		},
 	}
 	d.Vertices = append(d.Vertices, quad...)
-	quadOffset := len(d.Vertices) - 4
+	quadOffset := len(d.Vertices) - len(quad)
 	indices := []uint32{
 		uint32(quadOffset + 0),
 		uint32(quadOffset + 1),
@@ -219,7 +250,19 @@ func (d *QuadData) AddTexturedQuad(texture *opengl.Texture) {
 		uint32(quadOffset + 0),
 	}
 	d.Indices = append(d.Indices, indices...)
-	d.Texture = texture
+	return nil
+}
+
+func (d *QuadData) addTexture(texture *opengl.Texture) error {
+	// already registered
+	if _, ok := d.Textures[texture.GetIndex()]; ok {
+		return nil
+	}
+	if len(d.Textures) == maxTextures {
+		return fmt.Errorf("maximum texture count reached")
+	}
+	d.Textures[texture.GetIndex()] = texture
+	return nil
 }
 
 // GetVBOGLPtr .

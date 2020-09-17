@@ -13,6 +13,16 @@ var (
 		size:  4,
 		value: gl.FLOAT,
 	}
+	GLDataTypeInt = GLDataType{
+		name:  "INT",
+		size:  4,
+		value: gl.INT,
+	}
+	GLDataTypeUint = GLDataType{
+		name:  "UNSIGNED_INT",
+		size:  4,
+		value: gl.UNSIGNED_INT,
+	}
 )
 
 // GLDataType .
