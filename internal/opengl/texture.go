@@ -63,14 +63,14 @@ func NewTexture(filepath string, index int) (*Texture, error) {
 
 // Bind .
 func (t *Texture) Bind() {
-	fmt.Printf("BIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
+	//fmt.Printf("BIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
 	gl.ActiveTexture(t.textureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
 }
 
 // Unbind .
 func (t *Texture) Unbind() {
-	fmt.Printf("UNBIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
+	//fmt.Printf("UNBIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
 	gl.ActiveTexture(t.textureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
