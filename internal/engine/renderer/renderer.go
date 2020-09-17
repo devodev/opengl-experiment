@@ -21,6 +21,19 @@ var (
 	maxIndices  = maxQuads * 6
 
 	maxTextures = 32
+
+	quadVertices = []mgl32.Vec4{
+		mgl32.Vec4{-0.5, 0.5, 0.0, 1.0},
+		mgl32.Vec4{-0.5, -0.5, 0.0, 1.0},
+		mgl32.Vec4{0.5, -0.5, 0.0, 1.0},
+		mgl32.Vec4{0.5, 0.5, 0.0, 1.0},
+	}
+	quadTexCoords = []mgl32.Vec2{
+		mgl32.Vec2{0, 1},
+		mgl32.Vec2{0, 0},
+		mgl32.Vec2{1, 0},
+		mgl32.Vec2{1, 1},
+	}
 )
 
 func min(a, b int) int {
@@ -136,7 +149,7 @@ func (r *Renderer) End() {
 	// fmt.Printf("> End\n")
 	// fmt.Printf("\tVertices: %v\n", r.quadData.Vertices)
 	// fmt.Printf("\tIndices: %v\n", r.quadData.Indices)
-	fmt.Printf("\tTextures: %v\n", r.quadData.Textures)
+	// fmt.Printf("\tTextures: %v\n", r.quadData.Textures)
 	r.quadVertexBuffer.SetData(r.quadData)
 	r.quadVertexArray.GetIBO().SetData(r.quadData)
 
@@ -217,30 +230,30 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 	if err := d.addTexture(texture); err != nil {
 		return err
 	}
+	quadOffset := len(d.Vertices)
 	quad := []QuadVertex{
 		QuadVertex{
-			Position: transform.Mul4x1(mgl32.Vec4{-0.5, 0.5, 0.0, 1.0}),
-			TexCoord: mgl32.Vec2{0, 1},
+			Position: transform.Mul4x1(quadVertices[0]),
+			TexCoord: quadTexCoords[0],
 			TexIndex: float32(texture.GetIndex()),
 		},
 		QuadVertex{
-			Position: transform.Mul4x1(mgl32.Vec4{-0.5, -0.5, 0.0, 1.0}),
-			TexCoord: mgl32.Vec2{0, 0},
+			Position: transform.Mul4x1(quadVertices[1]),
+			TexCoord: quadTexCoords[1],
 			TexIndex: float32(texture.GetIndex()),
 		},
 		QuadVertex{
-			Position: transform.Mul4x1(mgl32.Vec4{0.5, -0.5, 0.0, 1.0}),
-			TexCoord: mgl32.Vec2{1, 0},
+			Position: transform.Mul4x1(quadVertices[2]),
+			TexCoord: quadTexCoords[2],
 			TexIndex: float32(texture.GetIndex()),
 		},
 		QuadVertex{
-			Position: transform.Mul4x1(mgl32.Vec4{0.5, 0.5, 0.0, 1.0}),
-			TexCoord: mgl32.Vec2{1, 1},
+			Position: transform.Mul4x1(quadVertices[3]),
+			TexCoord: quadTexCoords[3],
 			TexIndex: float32(texture.GetIndex()),
 		},
 	}
 	d.Vertices = append(d.Vertices, quad...)
-	quadOffset := len(d.Vertices) - len(quad)
 	indices := []uint32{
 		uint32(quadOffset + 0),
 		uint32(quadOffset + 1),
