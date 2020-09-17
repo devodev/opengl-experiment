@@ -24,7 +24,7 @@ void main() {
 layout (location = 0) out vec4 fragColor;
 
 in vec2 fragTexCoord;
-in float fragTexIndex;
+flat in float fragTexIndex;
 
 uniform sampler2D tex[32];
 
@@ -46,7 +46,7 @@ void main() {
     //     case 13: fragColor = texture(tex[13], fragTexCoord); break;
     // }
     fragColor = texture(tex[int(fragTexIndex)], fragTexCoord);
-    //fragColor = texture(tex[fragTexIndex], fragTexCoord);
+    //fragColor = texture(tex[15], fragTexCoord);
     //fragColor = vec4(1,1,1,1);
 }
     `
