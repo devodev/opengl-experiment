@@ -26,9 +26,10 @@ var (
 type Application struct {
 	running bool
 
-	window   *window.Window
-	renderer *renderer.Renderer
-	logger   *engine.SimpleLogger
+	window       *window.Window
+	renderer     *renderer.Renderer
+	logger       *engine.SimpleLogger
+	frameCounter *FrameCounter
 
 	layers []Layer
 }
@@ -44,9 +45,10 @@ func New(options ...Option) (*Application, error) {
 		return nil, err
 	}
 	app := &Application{
-		window:   window,
-		renderer: renderer,
-		logger:   engine.NewLogger(),
+		window:       window,
+		renderer:     renderer,
+		logger:       engine.NewLogger(),
+		frameCounter: NewFrameCounter(),
 	}
 	for _, option := range options {
 		if err := option(app); err != nil {
@@ -68,13 +70,12 @@ func (a *Application) Run() error {
 		layer.OnInit(a)
 	}
 
-	var lastFrame float64
+	a.frameCounter.Init(glfw.GetTime())
 
 	// main loop
 	for a.running {
-		currentTime := glfw.GetTime()
-		deltaTime := currentTime - lastFrame
-		lastFrame = currentTime
+		a.frameCounter.OnUpdate(glfw.GetTime())
+		deltaTime := a.frameCounter.GetDelta()
 
 		a.renderer.Clear()
 		for _, layer := range a.layers {
