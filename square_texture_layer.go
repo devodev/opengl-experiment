@@ -36,7 +36,8 @@ func NewSquareTextureLayer(app *application.Application) (*SquareTextureLayer, e
 	}
 
 	width, height := app.GetWindow().GetGLFWWindow().GetSize()
-	cameraController := renderer.NewCameraController(renderer.NewCameraPerspective(width, height))
+	// cameraController := renderer.NewCameraController(renderer.NewCameraPerspective(width, height))
+	cameraController := renderer.NewCameraController(renderer.NewCameraOrthographic(width, height))
 
 	component := &SquareTextureLayer{
 		texture1:         texture1,
@@ -59,20 +60,16 @@ func (c *SquareTextureLayer) OnUpdate(app *application.Application, deltaTime fl
 
 // OnRender .
 func (c *SquareTextureLayer) OnRender(app *application.Application, deltaTime float64) {
-	pos1 := mgl32.Translate3D(-0.5, 0, -0.5)
+	pos1 := mgl32.Translate3D(-0.5, 0, 2)
 	pos2 := mgl32.Translate3D(0.5, 0, 1)
 	pos3 := mgl32.Translate3D(0, 0.5, 0.5)
-	pos4 := mgl32.Translate3D(0, -0.5, -1)
-	pos5 := mgl32.Translate3D(0, 0.5, -1)
+	pos4 := mgl32.Translate3D(0, -0.5, 0)
 
 	app.GetRenderer().Begin(c.cameraController)
 	app.GetRenderer().DrawTexturedQuad(pos1, c.texture1)
-	app.GetRenderer().DrawTexturedQuad(pos2, c.texture1)
-	app.GetRenderer().DrawTexturedQuad(pos5, c.texture2)
-	app.GetRenderer().DrawTexturedQuad(pos3, c.texture2)
-	app.GetRenderer().DrawTexturedQuad(pos4, c.texture2)
+	app.GetRenderer().DrawTexturedQuad(pos2, c.texture2)
 	app.GetRenderer().DrawTexturedQuad(pos3, c.texture3)
-	app.GetRenderer().DrawTexturedQuad(pos4, c.texture3)
+	app.GetRenderer().DrawTexturedQuad(pos4, c.texture1)
 	app.GetRenderer().End()
 }
 
