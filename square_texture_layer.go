@@ -17,7 +17,7 @@ type SquareTextureLayer struct {
 	texture1 *opengl.Texture
 	texture2 *opengl.Texture
 	texture3 *opengl.Texture
-	camera   *renderer.Camera
+	camera   *renderer.CameraPerspective
 }
 
 // NewSquareTextureLayer .
@@ -36,7 +36,7 @@ func NewSquareTextureLayer(app *application.Application) (*SquareTextureLayer, e
 	}
 
 	width, height := app.GetWindow().GetGLFWWindow().GetSize()
-	camera := renderer.NewCamera(width, height)
+	camera := renderer.NewCameraPerspective(width, height)
 
 	component := &SquareTextureLayer{
 		texture1: texture1,

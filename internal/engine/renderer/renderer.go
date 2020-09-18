@@ -130,7 +130,7 @@ func (r *Renderer) Clear() {
 }
 
 // Begin .
-func (r *Renderer) Begin(camera *Camera) {
+func (r *Renderer) Begin(camera *CameraPerspective) {
 	r.quadData = &QuadData{
 		Textures: make(map[int]*opengl.Texture),
 		Vertices: make([]QuadVertex, 0, maxVertices),
