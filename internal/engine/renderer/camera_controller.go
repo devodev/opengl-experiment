@@ -3,7 +3,7 @@ package renderer
 import (
 	"math"
 
-	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/devodev/opengl-experimentation/internal/engine/window"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -62,34 +62,34 @@ func NewCameraController(camera Camera) *CameraController {
 }
 
 // OnUpdate .
-func (c *CameraController) OnUpdate(glfwWindow *glfw.Window, deltaTime float64) {
-	if glfwWindow.GetAttrib(glfw.Focused) == glfw.False {
+func (c *CameraController) OnUpdate(w *window.Window, deltaTime float64) {
+	if !w.IsFocused() {
 		return
 	}
 
 	// speed
 	speed := c.baseSpeed * float32(deltaTime)
 	// position
-	if !(glfwWindow.GetKey(glfw.KeyW) == glfw.Release) {
+	if w.IsKeyPressed(window.KeyW) {
 		c.moveForward(speed)
 	}
-	if !(glfwWindow.GetKey(glfw.KeyS) == glfw.Release) {
+	if w.IsKeyPressed(window.KeyS) {
 		c.moveBackward(speed)
 	}
-	if !(glfwWindow.GetKey(glfw.KeyA) == glfw.Release) {
+	if w.IsKeyPressed(window.KeyA) {
 		c.moveLeft(speed)
 	}
-	if !(glfwWindow.GetKey(glfw.KeyD) == glfw.Release) {
+	if w.IsKeyPressed(window.KeyD) {
 		c.moveRight(speed)
 	}
 	// rotation
-	windowWidth, windowHeight := glfwWindow.GetSize()
-	cursorX, cursorY := glfwWindow.GetCursorPos()
+	windowWidth, windowHeight := w.GetSize()
+	cursorX, cursorY := w.GetCursorPos()
 	if cursorX >= 0 &&
 		cursorY >= 0 &&
 		cursorX <= float64(windowWidth) &&
 		cursorY <= float64(windowHeight) {
-		if glfwWindow.GetMouseButton(glfw.MouseButton1) == glfw.Press {
+		if w.IsMouseButtonPressed(window.MouseButton1) {
 			if !c.mouseButton1IsPressed {
 				c.mouseButton1IsPressed = true
 				c.mousePosX = cursorX
@@ -118,6 +118,7 @@ func (c *CameraController) rotate(speed float32, posX, posY float64) {
 
 	c.yaw -= float32(xOffset) * c.rotationSensitivity * speed
 	c.pitch -= float32(yOffset) * c.rotationSensitivity * speed
+
 	c.recalculateTarget()
 }
 

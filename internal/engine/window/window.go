@@ -85,9 +85,34 @@ func (w *Window) Init() error {
 	return nil
 }
 
+// GetSize .
+func (w *Window) GetSize() (int, int) {
+	return w.width, w.height
+}
+
 // ShouldClose .
 func (w *Window) ShouldClose() bool {
 	return w.window.ShouldClose()
+}
+
+// IsFocused .
+func (w *Window) IsFocused() bool {
+	return w.window.GetAttrib(glfw.Focused) == glfw.True
+}
+
+// IsKeyPressed .
+func (w *Window) IsKeyPressed(key Key) bool {
+	return w.window.GetKey(glfw.Key(key)) == glfw.Press
+}
+
+// IsMouseButtonPressed .
+func (w *Window) IsMouseButtonPressed(m MouseButton) bool {
+	return w.window.GetMouseButton(glfw.MouseButton(m)) == glfw.Press
+}
+
+// GetCursorPos .
+func (w *Window) GetCursorPos() (float64, float64) {
+	return w.window.GetCursorPos()
 }
 
 // Close .

@@ -55,7 +55,7 @@ func (c *SquareTextureLayer) OnInit(app *application.Application) {
 // OnUpdate .
 func (c *SquareTextureLayer) OnUpdate(app *application.Application, deltaTime float64) {
 	c.processInput(app)
-	c.cameraController.OnUpdate(app.GetWindow().GetGLFWWindow(), deltaTime)
+	c.cameraController.OnUpdate(app.GetWindow(), deltaTime)
 }
 
 // OnRender .
