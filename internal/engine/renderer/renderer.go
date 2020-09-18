@@ -130,7 +130,7 @@ func (r *Renderer) Clear() {
 }
 
 // Begin .
-func (r *Renderer) Begin(camera *CameraPerspective) {
+func (r *Renderer) Begin(cameraController *CameraController) {
 	r.quadData = &QuadData{
 		Textures: make(map[int]*opengl.Texture),
 		Vertices: make([]QuadVertex, 0, maxVertices),
@@ -140,7 +140,7 @@ func (r *Renderer) Begin(camera *CameraPerspective) {
 	r.quadShaderProgram.Bind()
 	defer r.quadShaderProgram.Unbind()
 
-	vp := camera.GetViewProjectionMatrix()
+	vp := cameraController.GetViewProjectionMatrix()
 	r.quadShaderProgram.SetUniformMatrix4fv("vp", 1, false, &vp[0])
 }
 
