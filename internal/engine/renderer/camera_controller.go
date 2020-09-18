@@ -6,18 +6,18 @@ import (
 )
 
 var (
-	defaultControllerPos   = mgl32.Vec3{0, 0, 2}
-	defaultControllerFront = mgl32.Vec3{0, 0, -0.5}
-	defaultControllerUp    = mgl32.Vec3{0, 1, 0}
-	defaultControllerSpeed = float32(0.05)
+	defaultControllerPos    = mgl32.Vec3{0, 0, 2}
+	defaultControllerTarget = mgl32.Vec3{0, 0, -0.5}
+	defaultControllerUp     = mgl32.Vec3{0, 1, 0}
+	defaultControllerSpeed  = float32(0.05)
 )
 
 // CameraController .
 type CameraController struct {
-	pos   mgl32.Vec3
-	front mgl32.Vec3
-	up    mgl32.Vec3
-	speed float32
+	pos    mgl32.Vec3
+	target mgl32.Vec3
+	up     mgl32.Vec3
+	speed  float32
 
 	viewMatrix mgl32.Mat4
 
@@ -28,7 +28,7 @@ type CameraController struct {
 func NewCameraController(camera Camera) *CameraController {
 	return &CameraController{
 		pos:    defaultControllerPos,
-		front:  defaultControllerFront,
+		target: defaultControllerTarget,
 		up:     defaultControllerUp,
 		speed:  defaultControllerSpeed,
 		camera: camera,
@@ -43,16 +43,16 @@ func (c *CameraController) OnUpdate(glfwWindow *glfw.Window, deltaTime float64) 
 
 	c.speed = float32(2 * deltaTime)
 	if !(glfwWindow.GetKey(glfw.KeyW) == glfw.Release) {
-		c.pos = c.pos.Add(c.front.Mul(c.speed))
+		c.pos = c.pos.Add(c.target.Mul(c.speed))
 	}
 	if !(glfwWindow.GetKey(glfw.KeyS) == glfw.Release) {
-		c.pos = c.pos.Sub(c.front.Mul(c.speed))
+		c.pos = c.pos.Sub(c.target.Mul(c.speed))
 	}
 	if !(glfwWindow.GetKey(glfw.KeyA) == glfw.Release) {
-		c.pos = c.pos.Sub(c.front.Normalize().Cross(c.up).Mul(c.speed))
+		c.pos = c.pos.Sub(c.target.Normalize().Cross(c.up).Mul(c.speed))
 	}
 	if !(glfwWindow.GetKey(glfw.KeyD) == glfw.Release) {
-		c.pos = c.pos.Add(c.front.Normalize().Cross(c.up).Mul(c.speed))
+		c.pos = c.pos.Add(c.target.Normalize().Cross(c.up).Mul(c.speed))
 	}
 	c.camera.Resize(glfwWindow.GetSize())
 	c.recalculateViewMatrix()
@@ -64,7 +64,7 @@ func (c *CameraController) GetViewProjectionMatrix() mgl32.Mat4 {
 }
 
 func (c *CameraController) recalculateViewMatrix() {
-	c.viewMatrix = mgl32.LookAtV(c.pos, c.pos.Add(c.front), c.up)
+	c.viewMatrix = mgl32.LookAtV(c.pos, c.pos.Add(c.target), c.up)
 }
 
 func (c *CameraController) getViewMatrix() mgl32.Mat4 {
