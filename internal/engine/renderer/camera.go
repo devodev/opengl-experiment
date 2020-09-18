@@ -15,6 +15,7 @@ var (
 type Camera interface {
 	Resize(int, int)
 	GetProjectionMatrix() mgl32.Mat4
+	GetViewPortDimensions() (int, int)
 }
 
 // CameraPerspective .
@@ -51,6 +52,11 @@ func (c *CameraPerspective) Resize(width, height int) {
 // GetProjectionMatrix .
 func (c *CameraPerspective) GetProjectionMatrix() mgl32.Mat4 {
 	return c.projectionMatrix
+}
+
+// GetViewPortDimensions .
+func (c *CameraPerspective) GetViewPortDimensions() (int, int) {
+	return c.width, c.height
 }
 
 func (c *CameraPerspective) recalculateProjectionMatrix() {
@@ -91,6 +97,11 @@ func (c *CameraOrthographic) Resize(width, height int) {
 // GetProjectionMatrix .
 func (c *CameraOrthographic) GetProjectionMatrix() mgl32.Mat4 {
 	return c.projectionMatrix
+}
+
+// GetViewPortDimensions .
+func (c *CameraOrthographic) GetViewPortDimensions() (int, int) {
+	return c.width, c.height
 }
 
 func (c *CameraOrthographic) recalculateProjectionMatrix() {
