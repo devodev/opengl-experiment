@@ -6,18 +6,18 @@ import (
 )
 
 var (
-	defaultControllerPos    = mgl32.Vec3{0, 0, 2}
-	defaultControllerTarget = mgl32.Vec3{0, 0, -0.5}
-	defaultControllerUp     = mgl32.Vec3{0, 1, 0}
-	defaultControllerSpeed  = float32(0.05)
+	defaultControllerPos       = mgl32.Vec3{0, 0, 2}
+	defaultControllerTarget    = mgl32.Vec3{0, 0, -0.5}
+	defaultControllerUp        = mgl32.Vec3{0, 1, 0}
+	defaultControllerBaseSpeed = float32(2)
 )
 
 // CameraController .
 type CameraController struct {
-	pos    mgl32.Vec3
-	target mgl32.Vec3
-	up     mgl32.Vec3
-	speed  float32
+	pos       mgl32.Vec3
+	target    mgl32.Vec3
+	up        mgl32.Vec3
+	baseSpeed float32
 
 	viewMatrix mgl32.Mat4
 
@@ -27,11 +27,11 @@ type CameraController struct {
 // NewCameraController .
 func NewCameraController(camera Camera) *CameraController {
 	return &CameraController{
-		pos:    defaultControllerPos,
-		target: defaultControllerTarget,
-		up:     defaultControllerUp,
-		speed:  defaultControllerSpeed,
-		camera: camera,
+		pos:       defaultControllerPos,
+		target:    defaultControllerTarget,
+		up:        defaultControllerUp,
+		baseSpeed: defaultControllerBaseSpeed,
+		camera:    camera,
 	}
 }
 
@@ -41,18 +41,18 @@ func (c *CameraController) OnUpdate(glfwWindow *glfw.Window, deltaTime float64) 
 		return
 	}
 
-	c.speed = float32(2 * deltaTime)
+	speed := c.baseSpeed * float32(deltaTime)
 	if !(glfwWindow.GetKey(glfw.KeyW) == glfw.Release) {
-		c.pos = c.pos.Add(c.target.Mul(c.speed))
+		c.moveForward(speed)
 	}
 	if !(glfwWindow.GetKey(glfw.KeyS) == glfw.Release) {
-		c.pos = c.pos.Sub(c.target.Mul(c.speed))
+		c.moveBackward(speed)
 	}
 	if !(glfwWindow.GetKey(glfw.KeyA) == glfw.Release) {
-		c.pos = c.pos.Sub(c.target.Normalize().Cross(c.up).Mul(c.speed))
+		c.moveLeft(speed)
 	}
 	if !(glfwWindow.GetKey(glfw.KeyD) == glfw.Release) {
-		c.pos = c.pos.Add(c.target.Normalize().Cross(c.up).Mul(c.speed))
+		c.moveRight(speed)
 	}
 	c.camera.Resize(glfwWindow.GetSize())
 	c.recalculateViewMatrix()
@@ -61,6 +61,22 @@ func (c *CameraController) OnUpdate(glfwWindow *glfw.Window, deltaTime float64) 
 // GetViewProjectionMatrix .
 func (c *CameraController) GetViewProjectionMatrix() mgl32.Mat4 {
 	return c.camera.GetProjectionMatrix().Mul4(c.viewMatrix)
+}
+
+func (c *CameraController) moveForward(speed float32) {
+	c.pos = c.pos.Add(c.target.Mul(speed))
+}
+
+func (c *CameraController) moveBackward(speed float32) {
+	c.pos = c.pos.Sub(c.target.Mul(speed))
+}
+
+func (c *CameraController) moveLeft(speed float32) {
+	c.pos = c.pos.Sub(c.target.Normalize().Cross(c.up).Mul(speed))
+}
+
+func (c *CameraController) moveRight(speed float32) {
+	c.pos = c.pos.Add(c.target.Normalize().Cross(c.up).Mul(speed))
 }
 
 func (c *CameraController) recalculateViewMatrix() {
