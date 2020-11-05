@@ -1,4 +1,4 @@
-# opengl-experimentation
+# opengl-experiment
 
 ![Current Project State](docs/images/currentProjectState2.gif?raw=true "Current Project State")
 
