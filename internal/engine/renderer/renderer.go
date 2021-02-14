@@ -23,16 +23,16 @@ var (
 	maxTextures = 32
 
 	quadVertices = []mgl32.Vec4{
-		mgl32.Vec4{-0.5, 0.5, 0.0, 1.0},
-		mgl32.Vec4{-0.5, -0.5, 0.0, 1.0},
-		mgl32.Vec4{0.5, -0.5, 0.0, 1.0},
-		mgl32.Vec4{0.5, 0.5, 0.0, 1.0},
+		{-0.5, 0.5, 0.0, 1.0},
+		{-0.5, -0.5, 0.0, 1.0},
+		{0.5, -0.5, 0.0, 1.0},
+		{0.5, 0.5, 0.0, 1.0},
 	}
 	quadTexCoords = []mgl32.Vec2{
-		mgl32.Vec2{0, 1},
-		mgl32.Vec2{0, 0},
-		mgl32.Vec2{1, 0},
-		mgl32.Vec2{1, 1},
+		{0, 1},
+		{0, 0},
+		{1, 0},
+		{1, 1},
 	}
 )
 
@@ -232,22 +232,22 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 	}
 	quadOffset := len(d.Vertices)
 	quad := []QuadVertex{
-		QuadVertex{
+		{
 			Position: transform.Mul4x1(quadVertices[0]),
 			TexCoord: quadTexCoords[0],
 			TexIndex: float32(texture.GetIndex()),
 		},
-		QuadVertex{
+		{
 			Position: transform.Mul4x1(quadVertices[1]),
 			TexCoord: quadTexCoords[1],
 			TexIndex: float32(texture.GetIndex()),
 		},
-		QuadVertex{
+		{
 			Position: transform.Mul4x1(quadVertices[2]),
 			TexCoord: quadTexCoords[2],
 			TexIndex: float32(texture.GetIndex()),
 		},
-		QuadVertex{
+		{
 			Position: transform.Mul4x1(quadVertices[3]),
 			TexCoord: quadTexCoords[3],
 			TexIndex: float32(texture.GetIndex()),
