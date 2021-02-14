@@ -1,8 +1,8 @@
 package application
 
 import (
-	"github.com/devodev/opengl-experimentation/internal/engine"
-	"github.com/devodev/opengl-experimentation/internal/engine/window"
+	"github.com/devodev/opengl-experiment/internal/engine"
+	"github.com/devodev/opengl-experiment/internal/engine/window"
 )
 
 // Option .

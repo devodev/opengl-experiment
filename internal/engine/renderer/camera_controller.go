@@ -3,7 +3,7 @@ package renderer
 import (
 	"math"
 
-	"github.com/devodev/opengl-experimentation/internal/engine/window"
+	"github.com/devodev/opengl-experiment/internal/engine/window"
 	"github.com/go-gl/mathgl/mgl32"
 )
 

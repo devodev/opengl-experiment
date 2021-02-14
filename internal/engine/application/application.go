@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/devodev/opengl-experimentation/internal/engine"
-	"github.com/devodev/opengl-experimentation/internal/engine/renderer"
-	"github.com/devodev/opengl-experimentation/internal/engine/window"
+	"github.com/devodev/opengl-experiment/internal/engine"
+	"github.com/devodev/opengl-experiment/internal/engine/renderer"
+	"github.com/devodev/opengl-experiment/internal/engine/window"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"

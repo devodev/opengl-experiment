@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/devodev/opengl-experimentation/internal/opengl"
+	"github.com/devodev/opengl-experiment/internal/opengl"
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -230,30 +230,8 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 	if err := d.addTexture(texture); err != nil {
 		return err
 	}
+
 	quadOffset := len(d.Vertices)
-	quad := []QuadVertex{
-		{
-			Position: transform.Mul4x1(quadVertices[0]),
-			TexCoord: quadTexCoords[0],
-			TexIndex: float32(texture.GetIndex()),
-		},
-		{
-			Position: transform.Mul4x1(quadVertices[1]),
-			TexCoord: quadTexCoords[1],
-			TexIndex: float32(texture.GetIndex()),
-		},
-		{
-			Position: transform.Mul4x1(quadVertices[2]),
-			TexCoord: quadTexCoords[2],
-			TexIndex: float32(texture.GetIndex()),
-		},
-		{
-			Position: transform.Mul4x1(quadVertices[3]),
-			TexCoord: quadTexCoords[3],
-			TexIndex: float32(texture.GetIndex()),
-		},
-	}
-	d.Vertices = append(d.Vertices, quad...)
 	indices := []uint32{
 		uint32(quadOffset + 0),
 		uint32(quadOffset + 1),
@@ -263,6 +241,15 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 		uint32(quadOffset + 0),
 	}
 	d.Indices = append(d.Indices, indices...)
+
+	for i := 0; i < 4; i++ {
+		d.Vertices = append(d.Vertices, QuadVertex{
+			Position: transform.Mul4x1(quadVertices[i]),
+			TexCoord: quadTexCoords[i],
+			TexIndex: float32(texture.GetIndex()),
+		})
+	}
+
 	return nil
 }
 

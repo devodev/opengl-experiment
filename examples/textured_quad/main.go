@@ -3,8 +3,8 @@ package main
 import (
 	"runtime"
 
-	"github.com/devodev/opengl-experimentation/internal/engine"
-	"github.com/devodev/opengl-experimentation/internal/engine/application"
+	"github.com/devodev/opengl-experiment/internal/engine"
+	"github.com/devodev/opengl-experiment/internal/engine/application"
 )
 
 func init() {

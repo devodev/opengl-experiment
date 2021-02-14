@@ -15,12 +15,12 @@ go get -u github.com/go-gl/gl/v4.6-core/gl
 go get -u github.com/go-gl/glfw/v3.3/glfw
 ```
 
-## Build
+## Example
 
-Build the project
+Run the example project
 
 ```bash
-git clone https://github.com/devodev/opengl-experimentation.git
-cd opengl-experimentation
-go build .
+git clone https://github.com/devodev/opengl-experiment.git
+cd opengl-experiment/examples/textured_quad
+go run .
 ```
