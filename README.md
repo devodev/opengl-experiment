@@ -4,9 +4,9 @@
 
 ## Setup
 
-Install GLFW Depencies: <https://github.com/go-gl/glfw#installation>
-
 Install a cgo compiler(Windows): <https://jmeubank.github.io/tdm-gcc/>
+
+Install GLFW Depencies: <https://github.com/go-gl/glfw#installation>
 
 Install OpenGL and GLFW cgo binding libraries
 
