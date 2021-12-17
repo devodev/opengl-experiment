@@ -90,6 +90,12 @@ func (w *Window) GetSize() (int, int) {
 	return w.width, w.height
 }
 
+// SetSize .
+func (w *Window) SetSize(width, height int) {
+	w.width = width
+	w.height = height
+}
+
 // ShouldClose .
 func (w *Window) ShouldClose() bool {
 	return w.window.ShouldClose()

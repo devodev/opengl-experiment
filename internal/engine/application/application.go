@@ -17,13 +17,35 @@ var (
 	ErrAlreadyClosed = errors.New("application already closed")
 )
 
-// Application needs to be used exclusively
-// on the main thread.
-//
-// Make sure you call runtime.LockOSThread()
-// from the main function before initiliazing
-// an application.
-type Application struct {
+var (
+	app *application
+)
+
+func init() {
+	if err := initApp(); err != nil {
+		panic(err)
+	}
+}
+
+func initApp() error {
+	window, err := window.New()
+	if err != nil {
+		return err
+	}
+	renderer, err := renderer.New()
+	if err != nil {
+		return err
+	}
+	app = &application{
+		window:       window,
+		renderer:     renderer,
+		logger:       engine.NewLogger(),
+		frameCounter: NewFrameCounter(),
+	}
+	return nil
+}
+
+type application struct {
 	running bool
 
 	window       *window.Window
@@ -34,40 +56,27 @@ type Application struct {
 	layers []Layer
 }
 
-// New .
-func New(options ...Option) (*Application, error) {
-	window, err := window.New()
-	if err != nil {
-		return nil, err
+func (a *application) init() error {
+	if err := app.window.Init(); err != nil {
+		return fmt.Errorf("error initializing window: %v", err)
 	}
-	renderer, err := renderer.New()
-	if err != nil {
-		return nil, err
+	app.logger.Printf("GLFW version: %s", glfw.GetVersionString())
+
+	if err := app.renderer.Init(); err != nil {
+		return fmt.Errorf("error initializing renderer: %v", err)
 	}
-	app := &Application{
-		window:       window,
-		renderer:     renderer,
-		logger:       engine.NewLogger(),
-		frameCounter: NewFrameCounter(),
-	}
-	for _, option := range options {
-		if err := option(app); err != nil {
-			return nil, err
-		}
-	}
-	if err := app.init(); err != nil {
-		return nil, err
-	}
-	return app, nil
+	app.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
+	return nil
 }
 
-// Run .
-func (a *Application) Run() error {
+func (a *application) run() error {
 	a.running = true
 
 	// init components
 	for _, layer := range a.layers {
-		layer.OnInit(a)
+		if err := layer.OnInit(); err != nil {
+			return err
+		}
 	}
 
 	a.frameCounter.Init(glfw.GetTime())
@@ -79,64 +88,64 @@ func (a *Application) Run() error {
 
 		a.renderer.Clear()
 		for _, layer := range a.layers {
-			layer.OnUpdate(a, deltaTime)
-			layer.OnRender(a, deltaTime)
+			layer.OnUpdate(deltaTime)
+			layer.OnRender(deltaTime)
 		}
 		a.onUpdate()
 	}
 	return nil
 }
 
-// Close .
-func (a *Application) Close() error {
-	if !a.running {
-		return ErrAlreadyClosed
-	}
-	a.RequestClose()
-	if err := a.window.Close(); err != nil {
-		return err
-	}
-	return nil
-}
-
-// RequestClose .
-func (a *Application) RequestClose() {
-	a.running = false
-}
-
-// AddLayer .
-func (a *Application) AddLayer(l Layer) {
-	a.layers = append(a.layers, l)
-}
-
-func (a *Application) init() error {
-	if err := a.window.Init(); err != nil {
-		return fmt.Errorf("error initializing window: %v", err)
-	}
-	a.logger.Printf("GLFW version: %s", glfw.GetVersionString())
-
-	if err := a.renderer.Init(); err != nil {
-		return fmt.Errorf("error initializing renderer: %v", err)
-	}
-	a.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
-	return nil
-}
-
-// GetWindow .
-func (a *Application) GetWindow() *window.Window {
-	return a.window
-}
-
-// GetRenderer .
-func (a *Application) GetRenderer() *renderer.Renderer {
-	return a.renderer
-}
-
-func (a *Application) onUpdate() {
+func (a *application) onUpdate() {
 	if a.window.ShouldClose() {
-		a.RequestClose()
+		a.running = false
 		return
 	}
 	glfw.PollEvents()
 	a.window.GetGLFWWindow().SwapBuffers()
+}
+
+// Run .
+func Run() error {
+	if err := app.init(); err != nil {
+		return err
+	}
+	defer app.window.Close()
+
+	return app.run()
+}
+
+// Close .
+func Close() {
+	app.running = false
+}
+
+// AddLayer .
+func AddLayer(l Layer) {
+	app.layers = append(app.layers, l)
+}
+
+// GetWindow .
+func GetWindow() *window.Window {
+	return app.window
+}
+
+// GetRenderer .
+func GetRenderer() *renderer.Renderer {
+	return app.renderer
+}
+
+// SetLogger .
+func SetLogger(logger *engine.SimpleLogger) {
+	app.logger = logger
+}
+
+// SetWindow .
+func SetWindow(window *window.Window) {
+	app.window = window
+}
+
+// SetWindow .
+func SetWindowSize(width, height int) {
+	app.window.SetSize(width, height)
 }

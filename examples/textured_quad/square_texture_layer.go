@@ -12,6 +12,11 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+var (
+	defaultWidth  = 1024
+	defaultHeight = 768
+)
+
 // SquareTextureLayer .
 type SquareTextureLayer struct {
 	texture1         *opengl.Texture
@@ -20,61 +25,53 @@ type SquareTextureLayer struct {
 	cameraController *renderer.CameraController
 }
 
-// NewSquareTextureLayer .
-func NewSquareTextureLayer(app *application.Application) (*SquareTextureLayer, error) {
-	texture1, err := opengl.NewTexture("assets/textures/google_logo.png", 0)
-	if err != nil {
-		return nil, fmt.Errorf("error creating texture1: %s", err)
-	}
-	texture2, err := opengl.NewTexture("assets/textures/facebook_logo.png", 10)
-	if err != nil {
-		return nil, fmt.Errorf("error creating texture2: %s", err)
-	}
-	texture3, err := opengl.NewTexture("assets/textures/instagram_logo.png", 15)
-	if err != nil {
-		return nil, fmt.Errorf("error creating texture3: %s", err)
-	}
-
-	width, height := app.GetWindow().GetGLFWWindow().GetSize()
-	// cameraController := renderer.NewCameraController(renderer.NewCameraPerspective(width, height))
-	cameraController := renderer.NewCameraController(renderer.NewCameraOrthographic(width, height))
-
-	component := &SquareTextureLayer{
-		texture1:         texture1,
-		texture2:         texture2,
-		texture3:         texture3,
-		cameraController: cameraController,
-	}
-	return component, nil
-}
-
 // OnInit .
-func (c *SquareTextureLayer) OnInit(app *application.Application) {
+func (c *SquareTextureLayer) OnInit() error {
+	var err error
+	c.texture1, err = opengl.NewTexture("assets/textures/google_logo.png", 0)
+	if err != nil {
+		return fmt.Errorf("error creating texture1: %s", err)
+	}
+	c.texture2, err = opengl.NewTexture("assets/textures/facebook_logo.png", 10)
+	if err != nil {
+		return fmt.Errorf("error creating texture2: %s", err)
+	}
+	c.texture3, err = opengl.NewTexture("assets/textures/instagram_logo.png", 15)
+	if err != nil {
+		return fmt.Errorf("error creating texture3: %s", err)
+	}
+
+	application.SetWindowSize(defaultWidth, defaultHeight)
+
+	// cameraController := renderer.NewCameraController(renderer.NewCameraPerspective(defaultWidth, defaultHeight))
+	c.cameraController = renderer.NewCameraController(renderer.NewCameraOrthographic(defaultWidth, defaultHeight))
+
+	return nil
 }
 
 // OnUpdate .
-func (c *SquareTextureLayer) OnUpdate(app *application.Application, deltaTime float64) {
-	c.processInput(app)
-	c.cameraController.OnUpdate(app.GetWindow(), deltaTime)
+func (c *SquareTextureLayer) OnUpdate(deltaTime float64) {
+	c.processInput()
+	c.cameraController.OnUpdate(application.GetWindow(), deltaTime)
 }
 
 // OnRender .
-func (c *SquareTextureLayer) OnRender(app *application.Application, deltaTime float64) {
+func (c *SquareTextureLayer) OnRender(deltaTime float64) {
 	pos1 := mgl32.Translate3D(-0.5, 0, 2)
 	pos2 := mgl32.Translate3D(0.5, 0, 1)
 	pos3 := mgl32.Translate3D(0, 0.5, 0.5)
 	pos4 := mgl32.Translate3D(0, -0.5, 0)
 
-	app.GetRenderer().Begin(c.cameraController)
-	app.GetRenderer().DrawTexturedQuad(pos1, c.texture1)
-	app.GetRenderer().DrawTexturedQuad(pos2, c.texture2)
-	app.GetRenderer().DrawTexturedQuad(pos3, c.texture3)
-	app.GetRenderer().DrawTexturedQuad(pos4, c.texture1)
-	app.GetRenderer().End()
+	application.GetRenderer().Begin(c.cameraController)
+	application.GetRenderer().DrawTexturedQuad(pos1, c.texture1)
+	application.GetRenderer().DrawTexturedQuad(pos2, c.texture2)
+	application.GetRenderer().DrawTexturedQuad(pos3, c.texture3)
+	application.GetRenderer().DrawTexturedQuad(pos4, c.texture1)
+	application.GetRenderer().End()
 }
 
-func (c *SquareTextureLayer) processInput(app *application.Application) {
-	glfwWindow := app.GetWindow().GetGLFWWindow()
+func (c *SquareTextureLayer) processInput() {
+	glfwWindow := application.GetWindow().GetGLFWWindow()
 
 	// we lost focus, dont process synthetic events
 	if glfwWindow.GetAttrib(glfw.Focused) == glfw.False {
@@ -83,7 +80,7 @@ func (c *SquareTextureLayer) processInput(app *application.Application) {
 
 	// close window
 	if glfwWindow.GetKey(glfw.KeyEscape) != glfw.Release {
-		app.RequestClose()
+		application.Close()
 		return
 	}
 	// toggle wireframes
