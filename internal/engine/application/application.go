@@ -3,6 +3,8 @@ package application
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/devodev/opengl-experiment/internal/engine"
 	"github.com/devodev/opengl-experiment/internal/engine/renderer"
@@ -48,6 +50,8 @@ func initApp() error {
 type application struct {
 	running bool
 
+	profiling bool
+
 	window       *window.Window
 	renderer     *renderer.Renderer
 	logger       *engine.SimpleLogger
@@ -70,6 +74,8 @@ func (a *application) init() error {
 }
 
 func (a *application) run() error {
+	a.setupProfiling()
+
 	a.running = true
 
 	// init components
@@ -86,14 +92,29 @@ func (a *application) run() error {
 		a.frameCounter.OnUpdate(glfw.GetTime())
 		deltaTime := a.frameCounter.GetDelta()
 
+		a.onUpdate()
 		a.renderer.Clear()
 		for _, layer := range a.layers {
 			layer.OnUpdate(deltaTime)
 			layer.OnRender(deltaTime)
 		}
-		a.onUpdate()
+		a.window.GetGLFWWindow().SwapBuffers()
 	}
 	return nil
+}
+
+func (a *application) setupProfiling() {
+	if !a.profiling {
+		return
+	}
+
+	// starts a http server that will serve pprof endpoints
+	// pprof endpoints are registered when importing its package (_ "net/http/pprof")
+	go func() {
+		addr := "localhost:6060"
+		a.logger.Infof("pprof server listening on http://%s", addr)
+		a.logger.Println(http.ListenAndServe(addr, nil))
+	}()
 }
 
 func (a *application) onUpdate() {
@@ -101,8 +122,9 @@ func (a *application) onUpdate() {
 		a.running = false
 		return
 	}
+	// mainthread only
 	glfw.PollEvents()
-	a.window.GetGLFWWindow().SwapBuffers()
+	//
 }
 
 // Run .
@@ -148,4 +170,8 @@ func SetWindow(window *window.Window) {
 // SetWindow .
 func SetWindowSize(width, height int) {
 	app.window.SetSize(width, height)
+}
+
+func EnableProfiling() {
+	app.profiling = true
 }
