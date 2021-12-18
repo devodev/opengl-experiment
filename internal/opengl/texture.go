@@ -14,30 +14,82 @@ import (
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
-// Texture .
-type Texture struct {
-	id          uint32
-	index       uint32
-	textureUnit uint32
+var (
+	maxTextures  uint32 = 32
+	textureCount uint32 = 0
+)
+
+type Texture interface {
+	BinderUnbinder
+	Index() int
+	Unit() uint32
 }
 
-// NewTexture .
-func NewTexture(filepath string, index uint32) (*Texture, error) {
+type texture struct {
+	id    uint32
+	index uint32
+	unit  uint32
+}
+
+// Newtexture .
+func NewNRGBATexture(filepath string) (*texture, error) {
 	rgba, err := rgbaFromFile(filepath)
 	if err != nil {
 		return nil, err
 	}
 
+	if textureCount >= maxTextures {
+		return nil, fmt.Errorf("max texture count reached: %d", maxTextures)
+	}
+	defer func() {
+		textureCount += 1
+	}()
+
+	// TODO: handle opengl texture registration errors
 	var id uint32
 	gl.GenTextures(1, &id)
 
-	texture := &Texture{
-		id:          id,
-		index:       index,
-		textureUnit: uint32(gl.TEXTURE0 + index),
+	texture := &texture{
+		id:    id,
+		index: textureCount,
+		unit:  uint32(gl.TEXTURE0 + textureCount),
 	}
-	texture.Bind()
-	defer texture.Unbind()
+	texture.setFromNRGBA(rgba)
+
+	return texture, nil
+}
+
+// Bind implements the Binder interface.
+func (t *texture) Bind() {
+	//fmt.Printf("BIND [index: %v, unit: %v, id: %v]\n", t.index, t.unit, t.id)
+	gl.ActiveTexture(t.unit)
+	gl.BindTexture(gl.TEXTURE_2D, t.id)
+}
+
+// Unbind implements the Unbinder interface.
+func (t *texture) Unbind() {
+	//fmt.Printf("UNBIND [index: %v, unit: %v, id: %v]\n", t.index, t.unit, t.id)
+	gl.ActiveTexture(t.unit)
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+}
+
+// ID .
+func (t *texture) ID() uint32 {
+	return t.id
+}
+
+// Index .
+func (t *texture) Index() int {
+	return int(t.index)
+}
+
+// Unit .
+func (t *texture) Unit() uint32 {
+	return t.unit
+}
+
+func (t *texture) setFromNRGBA(data *image.NRGBA) {
+	t.Bind()
 
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -47,44 +99,16 @@ func NewTexture(filepath string, index uint32) (*Texture, error) {
 		gl.TEXTURE_2D,
 		0,
 		gl.RGBA,
-		int32(rgba.Rect.Size().X),
-		int32(rgba.Rect.Size().Y),
+		int32(data.Rect.Size().X),
+		int32(data.Rect.Size().Y),
 		0,
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,
-		gl.Ptr(rgba.Pix),
+		gl.Ptr(data.Pix),
 	)
 	gl.GenerateMipmap(gl.TEXTURE_2D)
-	return texture, nil
-}
 
-// Bind .
-func (t *Texture) Bind() {
-	//fmt.Printf("BIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
-	gl.ActiveTexture(t.textureUnit)
-	gl.BindTexture(gl.TEXTURE_2D, t.id)
-}
-
-// Unbind .
-func (t *Texture) Unbind() {
-	//fmt.Printf("UNBIND [index: %v, unit: %v, id: %v]\n", t.index, t.textureUnit, t.id)
-	gl.ActiveTexture(t.textureUnit)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
-}
-
-// ID .
-func (t *Texture) ID() uint32 {
-	return t.id
-}
-
-// Index .
-func (t *Texture) Index() int {
-	return int(t.index)
-}
-
-// TextureUnit .
-func (t *Texture) TextureUnit() uint32 {
-	return t.textureUnit
+	t.Unbind()
 }
 
 func rgbaFromFile(filepath string) (*image.NRGBA, error) {
@@ -98,10 +122,10 @@ func rgbaFromFile(filepath string) (*image.NRGBA, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error decoding texture file: %s", err)
 	}
+
 	// Replaced manually drawing image.Image into image.RGBA
 	// with disintegration/imaging lib, which provide convenience methods
 	// for flipping/transposing/etc.
-	//
 	nrgba := imaging.FlipV(img)
 	//
 	// rgba := image.NewRGBA(img.Bounds())

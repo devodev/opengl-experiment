@@ -1,5 +1,13 @@
 package opengl
 
+type Binder interface{ Bind() }
+type Unbinder interface{ Unbind() }
+
+type BinderUnbinder interface {
+	Binder
+	Unbinder
+}
+
 // GlEnum string lookup
 var (
 	GlEnums = map[uint32][]string{

@@ -53,24 +53,21 @@ func min(a, b int) int {
 
 // Renderer .
 type Renderer struct {
-	backgroundColor color.RGBA
+	bgColor color.RGBA
 
+	// quad-related rendering primitives
 	quadVertexArray   *opengl.VAO
 	quadVertexBuffer  *opengl.VBO
 	quadShaderProgram *opengl.ShaderProgram
-
+	// quad-related batch rendering data
 	quadData *QuadData
 }
 
 // New .
 func New() (*Renderer, error) {
 	r := &Renderer{
-		backgroundColor: defaultBackgroundColor,
-		quadData: &QuadData{
-			Textures: make(map[int]*opengl.Texture),
-			Vertices: make([]QuadVertex, 0, maxVertices),
-			Indices:  make([]uint32, 0, maxIndices),
-		},
+		bgColor:  defaultBackgroundColor,
+		quadData: NewQuadData(),
 	}
 	return r, nil
 }
@@ -89,7 +86,7 @@ func (r *Renderer) Init() error {
 
 	r.enableBlending()
 
-	// initialize quad data
+	// initialize quad-related rendering primitives
 	quadVertexShaderSource := string(append([]byte(quadVertexShader), byte('\x00')))
 	quadFragmentShaderSource := string(append([]byte(quadFragmentShader), byte('\x00')))
 	shaderProgram, err := opengl.NewShaderProgram(quadVertexShaderSource, quadFragmentShaderSource)
@@ -131,10 +128,10 @@ func (r *Renderer) Init() error {
 func (r *Renderer) Clear() {
 	// clear buffers
 	gl.ClearColor(
-		float32(r.backgroundColor.R)/255,
-		float32(r.backgroundColor.G)/255,
-		float32(r.backgroundColor.B)/255,
-		float32(r.backgroundColor.A)/255,
+		float32(r.bgColor.R)/255,
+		float32(r.bgColor.G)/255,
+		float32(r.bgColor.B)/255,
+		float32(r.bgColor.A)/255,
 	)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
@@ -142,11 +139,7 @@ func (r *Renderer) Clear() {
 // Begin .
 func (r *Renderer) Begin(cameraController *CameraController) {
 	// reset data each frame
-	r.quadData = &QuadData{
-		Textures: make(map[int]*opengl.Texture),
-		Vertices: make([]QuadVertex, 0, maxVertices),
-		Indices:  make([]uint32, 0, maxIndices),
-	}
+	r.quadData = NewQuadData()
 
 	// set view-projection matrix
 	r.quadShaderProgram.Bind()
@@ -183,8 +176,8 @@ func (r *Renderer) End() {
 }
 
 // DrawTexturedQuad .
-func (r *Renderer) DrawTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture) {
-	if err := r.quadData.AddTexturedQuad(transform, texture); err != nil {
+func (r *Renderer) DrawTexturedQuad(quad *TexturedQuad) {
+	if err := r.quadData.AddTexturedQuad(quad); err != nil {
 		panic(err)
 	}
 }
@@ -230,17 +223,26 @@ type QuadVertex struct {
 
 // QuadData .
 type QuadData struct {
-	Textures map[int]*opengl.Texture
+	Textures map[int]opengl.Texture
 	Vertices []QuadVertex
 	Indices  []uint32
 }
 
+func NewQuadData() *QuadData {
+	return &QuadData{
+		Textures: make(map[int]opengl.Texture),
+		Vertices: make([]QuadVertex, 0, maxVertices),
+		Indices:  make([]uint32, 0, maxIndices),
+	}
+}
+
 // AddTexturedQuad .
-func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture) error {
-	if err := d.addTexture(texture); err != nil {
+func (d *QuadData) AddTexturedQuad(quad *TexturedQuad) error {
+	if err := d.addTexture(quad.Texture); err != nil {
 		return err
 	}
 
+	// add indices
 	quadOffset := len(d.Vertices)
 	indices := []uint32{
 		uint32(quadOffset),
@@ -252,24 +254,23 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 	}
 	d.Indices = append(d.Indices, indices...)
 
-	for i := 0; i < 4; i++ {
-		d.Vertices = append(d.Vertices, QuadVertex{
-			Position: transform.Mul4x1(quadVertices[i]),
+	// add vertices
+	for i := 0; i < len(quadVertices); i++ {
+		vertex := QuadVertex{
+			Position: quad.Transform.Mul4x1(quadVertices[i]),
 			TexCoord: quadTexCoords[i],
-			TexIndex: float32(texture.Index()),
-		})
+			TexIndex: float32(quad.Texture.Index()),
+		}
+		d.Vertices = append(d.Vertices, vertex)
 	}
 
 	return nil
 }
 
-func (d *QuadData) addTexture(texture *opengl.Texture) error {
+func (d *QuadData) addTexture(texture opengl.Texture) error {
 	// noop if already registered
 	if _, ok := d.Textures[texture.Index()]; ok {
 		return nil
-	}
-	if len(d.Textures) == maxTextures {
-		return fmt.Errorf("maximum texture count reached")
 	}
 	d.Textures[texture.Index()] = texture
 	return nil

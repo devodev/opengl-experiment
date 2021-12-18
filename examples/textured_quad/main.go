@@ -42,26 +42,30 @@ var (
 
 // SquareTextureLayer .
 type SquareTextureLayer struct {
-	texture1         *opengl.Texture
-	texture2         *opengl.Texture
-	texture3         *opengl.Texture
+	quads []*renderer.TexturedQuad
+
 	cameraController *renderer.CameraController
 }
 
 // OnInit .
 func (c *SquareTextureLayer) OnInit() error {
-	var err error
-	c.texture1, err = opengl.NewTexture("assets/textures/google_logo.png", 0)
+	texture1, err := opengl.NewNRGBATexture("assets/textures/google_logo.png")
 	if err != nil {
 		return fmt.Errorf("error creating texture1: %s", err)
 	}
-	c.texture2, err = opengl.NewTexture("assets/textures/facebook_logo.png", 10)
+	texture2, err := opengl.NewNRGBATexture("assets/textures/facebook_logo.png")
 	if err != nil {
 		return fmt.Errorf("error creating texture2: %s", err)
 	}
-	c.texture3, err = opengl.NewTexture("assets/textures/instagram_logo.png", 15)
+	texture3, err := opengl.NewNRGBATexture("assets/textures/instagram_logo.png")
 	if err != nil {
 		return fmt.Errorf("error creating texture3: %s", err)
+	}
+
+	c.quads = []*renderer.TexturedQuad{
+		{Texture: texture1, Transform: mgl32.Translate3D(-0.5, 0, 2)},
+		{Texture: texture2, Transform: mgl32.Translate3D(0.5, 0, 1)},
+		{Texture: texture3, Transform: mgl32.Translate3D(0, 0.5, 0.5)},
 	}
 
 	application.SetWindowSize(defaultWidth, defaultHeight)
@@ -80,16 +84,10 @@ func (c *SquareTextureLayer) OnUpdate(deltaTime float64) {
 
 // OnRender .
 func (c *SquareTextureLayer) OnRender(deltaTime float64) {
-	pos1 := mgl32.Translate3D(-0.5, 0, 2)
-	pos2 := mgl32.Translate3D(0.5, 0, 1)
-	pos3 := mgl32.Translate3D(0, 0.5, 0.5)
-	pos4 := mgl32.Translate3D(0, -0.5, 0)
-
 	application.GetRenderer().Begin(c.cameraController)
-	application.GetRenderer().DrawTexturedQuad(pos1, c.texture1)
-	application.GetRenderer().DrawTexturedQuad(pos2, c.texture2)
-	application.GetRenderer().DrawTexturedQuad(pos3, c.texture3)
-	application.GetRenderer().DrawTexturedQuad(pos4, c.texture1)
+	for _, q := range c.quads {
+		application.GetRenderer().DrawTexturedQuad(q)
+	}
 	application.GetRenderer().End()
 }
 

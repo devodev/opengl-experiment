@@ -39,23 +39,20 @@ func initApp() error {
 		return err
 	}
 	app = &application{
-		window:       window,
-		renderer:     renderer,
-		logger:       engine.NewLogger(),
-		frameCounter: NewFrameCounter(),
+		window:   window,
+		renderer: renderer,
+		logger:   engine.NewLogger(),
 	}
 	return nil
 }
 
 type application struct {
-	running bool
+	closeRequested   bool
+	profilingEnabled bool
 
-	profiling bool
-
-	window       *window.Window
-	renderer     *renderer.Renderer
-	logger       *engine.SimpleLogger
-	frameCounter *FrameCounter
+	window   *window.Window
+	renderer *renderer.Renderer
+	logger   *engine.SimpleLogger
 
 	layers []Layer
 }
@@ -76,8 +73,6 @@ func (a *application) init() error {
 func (a *application) run() error {
 	a.setupProfiling()
 
-	a.running = true
-
 	// init components
 	for _, layer := range a.layers {
 		if err := layer.OnInit(); err != nil {
@@ -85,17 +80,31 @@ func (a *application) run() error {
 		}
 	}
 
-	a.frameCounter.Init(glfw.GetTime())
+	// init frame counter
+	frameCounter := NewFrameCounter()
+	frameCounter.Init(glfw.GetTime())
 
 	// main loop
-	for a.running {
-		a.frameCounter.OnUpdate(glfw.GetTime())
-		deltaTime := a.frameCounter.Delta()
+	for {
+		if a.shouldClose() {
+			break
+		}
 
-		a.onUpdate()
-		a.renderer.Clear()
+		// update frame counter
+		frameCounter.OnUpdate(glfw.GetTime())
+		deltaTime := frameCounter.Delta()
+
+		// poll window events
+		glfw.PollEvents()
+
+		// update layers
 		for _, layer := range a.layers {
 			layer.OnUpdate(deltaTime)
+		}
+
+		// render layers
+		a.renderer.Clear()
+		for _, layer := range a.layers {
 			layer.OnRender(deltaTime)
 		}
 		a.window.GetGLFWWindow().SwapBuffers()
@@ -103,8 +112,12 @@ func (a *application) run() error {
 	return nil
 }
 
+func (a *application) shouldClose() bool {
+	return a.closeRequested || a.window.ShouldClose()
+}
+
 func (a *application) setupProfiling() {
-	if !a.profiling {
+	if !a.profilingEnabled {
 		return
 	}
 
@@ -115,16 +128,6 @@ func (a *application) setupProfiling() {
 		a.logger.Infof("pprof server listening on http://%s", addr)
 		a.logger.Println(http.ListenAndServe(addr, nil))
 	}()
-}
-
-func (a *application) onUpdate() {
-	if a.window.ShouldClose() {
-		a.running = false
-		return
-	}
-	// mainthread only
-	glfw.PollEvents()
-	//
 }
 
 // Run .
@@ -139,7 +142,7 @@ func Run() error {
 
 // Close .
 func Close() {
-	app.running = false
+	app.closeRequested = true
 }
 
 // AddLayer .
@@ -173,5 +176,5 @@ func SetWindowSize(width, height int) {
 }
 
 func EnableProfiling() {
-	app.profiling = true
+	app.profilingEnabled = true
 }
