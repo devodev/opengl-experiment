@@ -90,7 +90,7 @@ func (a *application) run() error {
 	// main loop
 	for a.running {
 		a.frameCounter.OnUpdate(glfw.GetTime())
-		deltaTime := a.frameCounter.GetDelta()
+		deltaTime := a.frameCounter.Delta()
 
 		a.onUpdate()
 		a.renderer.Clear()
