@@ -26,26 +26,26 @@ func NewShaderProgram(vertexShaderSource, fragmentShaderSource string) (*ShaderP
 		return nil, fmt.Errorf("could not compile fragment shader: %s", err)
 	}
 
-	// create shader program and link the shaders previously compiled
+	// create shader program
 	shaderProgramID := gl.CreateProgram()
 	gl.AttachShader(shaderProgramID, vertexShader)
 	gl.AttachShader(shaderProgramID, fragmentShader)
+
+	// link shaders previously compiled
 	gl.LinkProgram(shaderProgramID)
 	gl.ValidateProgram(shaderProgramID)
 
-	defer func() {
-		gl.DetachShader(shaderProgramID, vertexShader)
-		gl.DetachShader(shaderProgramID, fragmentShader)
-		gl.DeleteShader(vertexShader)
-		gl.DeleteShader(fragmentShader)
-	}()
+	// free memory
+	gl.DetachShader(shaderProgramID, vertexShader)
+	gl.DetachShader(shaderProgramID, fragmentShader)
+	gl.DeleteShader(vertexShader)
+	gl.DeleteShader(fragmentShader)
 
 	if err := retrieveProgramLinkError(shaderProgramID); err != nil {
 		return nil, err
 	}
 
 	shaderProgram := &ShaderProgram{id: shaderProgramID}
-
 	return shaderProgram, nil
 }
 
@@ -69,27 +69,37 @@ func (s *ShaderProgram) getUniformLocation(name string) int32 {
 
 // SetUniform1f .
 func (s *ShaderProgram) SetUniform1f(name string, v0 float32) {
+	s.Bind()
 	gl.Uniform1f(s.getUniformLocation(name), v0)
+	s.Unbind()
 }
 
 // SetUniform1i .
 func (s *ShaderProgram) SetUniform1i(name string, v0 int32) {
+	s.Bind()
 	gl.Uniform1i(s.getUniformLocation(name), v0)
+	s.Unbind()
 }
 
 // SetUniform1iv .
 func (s *ShaderProgram) SetUniform1iv(name string, count int32, value *int32) {
+	s.Bind()
 	gl.Uniform1iv(s.getUniformLocation(name), count, value)
+	s.Unbind()
 }
 
 // SetUniform4f .
 func (s *ShaderProgram) SetUniform4f(name string, v0, v1, v2, v3 float32) {
+	s.Bind()
 	gl.Uniform4f(s.getUniformLocation(name), v0, v1, v2, v3)
+	s.Unbind()
 }
 
 // SetUniformMatrix4fv .
 func (s *ShaderProgram) SetUniformMatrix4fv(name string, count int32, transpose bool, value *float32) {
+	s.Bind()
 	gl.UniformMatrix4fv(s.getUniformLocation(name), count, transpose, value)
+	s.Unbind()
 }
 
 func compileShader(source string, shaderType uint32) (uint32, error) {

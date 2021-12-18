@@ -45,7 +45,7 @@ type CameraController struct {
 
 // NewCameraController .
 func NewCameraController(camera Camera) *CameraController {
-	width, height := camera.GetViewPortDimensions()
+	width, height := camera.ViewPortDimensions()
 	return &CameraController{
 		pos:                   defaultControllerPos,
 		target:                defaultControllerTarget,
@@ -107,7 +107,7 @@ func (c *CameraController) OnUpdate(w *window.Window, deltaTime float64) {
 
 // GetViewProjectionMatrix .
 func (c *CameraController) GetViewProjectionMatrix() mgl32.Mat4 {
-	return c.camera.GetProjectionMatrix().Mul4(c.viewMatrix)
+	return c.camera.ProjectionMatrix().Mul4(c.viewMatrix)
 }
 
 func (c *CameraController) rotate(speed float32, posX, posY float64) {

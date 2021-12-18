@@ -17,18 +17,15 @@ import (
 // Texture .
 type Texture struct {
 	id          uint32
-	index       int
+	index       uint32
 	textureUnit uint32
 }
 
 // NewTexture .
-func NewTexture(filepath string, index int) (*Texture, error) {
+func NewTexture(filepath string, index uint32) (*Texture, error) {
 	rgba, err := rgbaFromFile(filepath)
 	if err != nil {
 		return nil, err
-	}
-	if index < 0 {
-		return nil, fmt.Errorf("texture target out of bounds: %d != 0 <= x", index)
 	}
 
 	var id uint32
@@ -75,18 +72,18 @@ func (t *Texture) Unbind() {
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
-// GetID .
-func (t *Texture) GetID() uint32 {
+// ID .
+func (t *Texture) ID() uint32 {
 	return t.id
 }
 
-// GetIndex .
-func (t *Texture) GetIndex() int {
-	return t.index
+// Index .
+func (t *Texture) Index() int {
+	return int(t.index)
 }
 
-// GetTextureUnit .
-func (t *Texture) GetTextureUnit() uint32 {
+// TextureUnit .
+func (t *Texture) TextureUnit() uint32 {
 	return t.textureUnit
 }
 

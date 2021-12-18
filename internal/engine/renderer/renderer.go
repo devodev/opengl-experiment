@@ -3,6 +3,7 @@ package renderer
 import (
 	"fmt"
 	"image/color"
+	"os"
 	"strings"
 	"unsafe"
 
@@ -22,6 +23,8 @@ var (
 
 	maxTextures = 32
 
+	quadVertexSize = int(unsafe.Sizeof(QuadVertex{}))
+
 	quadVertices = []mgl32.Vec4{
 		{-0.5, 0.5, 0.0, 1.0},
 		{-0.5, -0.5, 0.0, 1.0},
@@ -34,6 +37,11 @@ var (
 		{1, 0},
 		{1, 1},
 	}
+	quadLayout = opengl.NewVBOLayout(
+		opengl.VBOLayoutElement{Count: 4, Normalized: false, DataType: opengl.GLDataTypeFloat},
+		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
+		opengl.VBOLayoutElement{Count: 1, Normalized: false, DataType: opengl.GLDataTypeFloat},
+	)
 )
 
 func min(a, b int) int {
@@ -75,8 +83,11 @@ func (r *Renderer) Init() error {
 		return fmt.Errorf("error initializing OpenGL: %s", err)
 	}
 
-	r.setDebugging()
-	r.setBlending()
+	if os.Getenv("DEBUG") == "true" {
+		r.enableDebugging()
+	}
+
+	r.enableBlending()
 
 	// initialize quad data
 	quadVertexShaderSource := string(append([]byte(quadVertexShader), byte('\x00')))
@@ -86,28 +97,27 @@ func (r *Renderer) Init() error {
 		return err
 	}
 
-	vbo, err := opengl.NewVBO(maxVertices * r.quadData.GetVertexSize())
+	// create VBO
+	vbo, err := opengl.NewVBO(maxVertices * quadVertexSize)
 	if err != nil {
 		return err
 	}
-	vbo.SetLayout(opengl.NewVBOLayout(
-		opengl.VBOLayoutElement{Count: 4, Normalized: false, DataType: opengl.GLDataTypeFloat},
-		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
-		opengl.VBOLayoutElement{Count: 1, Normalized: false, DataType: opengl.GLDataTypeFloat},
-	))
+	vbo.SetLayout(quadLayout)
 
+	// create IBO
 	ibo := opengl.NewIBO(maxIndices)
 
+	// create VAO and set buffers on it
 	vao := opengl.NewVAO()
 	vao.AddVBO(vbo)
 	vao.SetIBO(ibo)
 
+	//
 	samplers := make([]int32, maxTextures)
 	for i := 0; i < maxTextures; i++ {
 		samplers[i] = int32(i)
 	}
-	shaderProgram.Bind()
-	defer shaderProgram.Unbind()
+
 	shaderProgram.SetUniform1iv("tex", int32(len(samplers)), &samplers[0])
 
 	r.quadVertexArray = vao
@@ -131,17 +141,18 @@ func (r *Renderer) Clear() {
 
 // Begin .
 func (r *Renderer) Begin(cameraController *CameraController) {
+	// reset data each frame
 	r.quadData = &QuadData{
 		Textures: make(map[int]*opengl.Texture),
 		Vertices: make([]QuadVertex, 0, maxVertices),
 		Indices:  make([]uint32, 0, maxIndices),
 	}
 
+	// set view-projection matrix
 	r.quadShaderProgram.Bind()
-	defer r.quadShaderProgram.Unbind()
-
 	vp := cameraController.GetViewProjectionMatrix()
 	r.quadShaderProgram.SetUniformMatrix4fv("vp", 1, false, &vp[0])
+	r.quadShaderProgram.Unbind()
 }
 
 // End .
@@ -151,7 +162,7 @@ func (r *Renderer) End() {
 	// fmt.Printf("\tIndices: %v\n", r.quadData.Indices)
 	// fmt.Printf("\tTextures: %v\n", r.quadData.Textures)
 	r.quadVertexBuffer.SetData(r.quadData)
-	r.quadVertexArray.GetIBO().SetData(r.quadData)
+	r.quadVertexArray.IBO().SetData(r.quadData)
 
 	for _, t := range r.quadData.Textures {
 		t.Bind()
@@ -159,16 +170,15 @@ func (r *Renderer) End() {
 	r.quadShaderProgram.Bind()
 	r.quadVertexArray.Bind()
 
-	defer func() {
-		for _, t := range r.quadData.Textures {
-			t.Unbind()
-		}
-		r.quadVertexArray.Unbind()
-		r.quadShaderProgram.Unbind()
-	}()
-
-	count := r.quadVertexArray.GetIBO().GetCount()
+	// actual draw call
+	count := r.quadVertexArray.IBO().Count()
 	gl.DrawElements(gl.TRIANGLES, int32(count), gl.UNSIGNED_INT, nil)
+
+	for _, t := range r.quadData.Textures {
+		t.Unbind()
+	}
+	r.quadVertexArray.Unbind()
+	r.quadShaderProgram.Unbind()
 	// fmt.Printf("< End\n")
 }
 
@@ -179,7 +189,7 @@ func (r *Renderer) DrawTexturedQuad(transform mgl32.Mat4, texture *opengl.Textur
 	}
 }
 
-func (r *Renderer) setDebugging() {
+func (r *Renderer) enableDebugging() {
 	gl.Enable(gl.DEBUG_OUTPUT)
 	gl.DebugMessageCallback(func(
 		source uint32,
@@ -206,7 +216,7 @@ func (r *Renderer) setDebugging() {
 	}, nil)
 }
 
-func (r *Renderer) setBlending() {
+func (r *Renderer) enableBlending() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 }
@@ -233,7 +243,7 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 
 	quadOffset := len(d.Vertices)
 	indices := []uint32{
-		uint32(quadOffset + 0),
+		uint32(quadOffset),
 		uint32(quadOffset + 1),
 		uint32(quadOffset + 2),
 		uint32(quadOffset + 2),
@@ -246,7 +256,7 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 		d.Vertices = append(d.Vertices, QuadVertex{
 			Position: transform.Mul4x1(quadVertices[i]),
 			TexCoord: quadTexCoords[i],
-			TexIndex: float32(texture.GetIndex()),
+			TexIndex: float32(texture.Index()),
 		})
 	}
 
@@ -254,39 +264,33 @@ func (d *QuadData) AddTexturedQuad(transform mgl32.Mat4, texture *opengl.Texture
 }
 
 func (d *QuadData) addTexture(texture *opengl.Texture) error {
-	// already registered
-	if _, ok := d.Textures[texture.GetIndex()]; ok {
+	// noop if already registered
+	if _, ok := d.Textures[texture.Index()]; ok {
 		return nil
 	}
 	if len(d.Textures) == maxTextures {
 		return fmt.Errorf("maximum texture count reached")
 	}
-	d.Textures[texture.GetIndex()] = texture
+	d.Textures[texture.Index()] = texture
 	return nil
 }
 
-// GetVBOGLPtr .
-func (d *QuadData) GetVBOGLPtr() unsafe.Pointer {
+// VBOGLPtr .
+func (d *QuadData) VBOGLPtr() unsafe.Pointer {
 	return gl.Ptr(d.Vertices)
 }
 
-// GetVBOSize .
-func (d *QuadData) GetVBOSize() int {
-	return d.GetVertexSize() * len(d.Vertices)
+// VBOSize .
+func (d *QuadData) VBOSize() int {
+	return quadVertexSize * len(d.Vertices)
 }
 
-// GetVertexSize .
-func (d *QuadData) GetVertexSize() int {
-	var quadVertex QuadVertex
-	return int(unsafe.Sizeof(quadVertex))
-}
-
-// GetIBOGLPtr .
-func (d *QuadData) GetIBOGLPtr() unsafe.Pointer {
+// IBOGLPtr .
+func (d *QuadData) IBOGLPtr() unsafe.Pointer {
 	return gl.Ptr(d.Indices)
 }
 
-// GetIBOCount .
-func (d *QuadData) GetIBOCount() int32 {
+// IBOCount .
+func (d *QuadData) IBOCount() int32 {
 	return int32(len(d.Indices))
 }

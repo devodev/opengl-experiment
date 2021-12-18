@@ -18,19 +18,19 @@ func NewVAO() *VAO {
 // AddVBO .
 func (v *VAO) AddVBO(vbo *VBO) {
 	v.Bind()
-	defer v.Unbind()
-
 	vbo.Bind()
-	defer vbo.Unbind()
 
-	layout := vbo.GetLayout()
+	layout := vbo.Layout()
 
 	offset := 0
 	for idx, element := range layout.elements {
-		gl.VertexAttribPointer(uint32(idx), element.Count, element.DataType.value, element.Normalized, layout.GetStride(), gl.PtrOffset(offset))
+		gl.VertexAttribPointerWithOffset(uint32(idx), element.Count, element.DataType.value, element.Normalized, layout.Stride(), uintptr(offset))
 		gl.EnableVertexAttribArray(uint32(idx))
 		offset += (element.DataType.size * int(element.Count))
 	}
+
+	v.Unbind()
+	vbo.Unbind()
 }
 
 // SetIBO .
@@ -43,8 +43,8 @@ func (v *VAO) SetIBO(ibo *IBO) {
 	v.ibo = ibo
 }
 
-// GetIBO .
-func (v *VAO) GetIBO() *IBO {
+// IBO .
+func (v *VAO) IBO() *IBO {
 	return v.ibo
 }
 

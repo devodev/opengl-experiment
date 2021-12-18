@@ -8,22 +8,16 @@ import (
 
 // GLDataTypes
 var (
-	GLDataTypeFloat = GLDataType{
-		name:  "FLOAT",
-		size:  4,
-		value: gl.FLOAT,
-	}
-	GLDataTypeInt = GLDataType{
-		name:  "INT",
-		size:  4,
-		value: gl.INT,
-	}
-	GLDataTypeUint = GLDataType{
-		name:  "UNSIGNED_INT",
-		size:  4,
-		value: gl.UNSIGNED_INT,
-	}
+	GLDataTypeFloat = GLDataType{name: "FLOAT", size: 4, value: gl.FLOAT}
+	GLDataTypeInt   = GLDataType{name: "INT", size: 4, value: gl.INT}
+	GLDataTypeUint  = GLDataType{name: "UNSIGNED_INT", size: 4, value: gl.UNSIGNED_INT}
 )
+
+// VBOData .
+type VBOData interface {
+	VBOGLPtr() unsafe.Pointer
+	VBOSize() int
+}
 
 // GLDataType .
 type GLDataType struct {
@@ -42,12 +36,12 @@ type VBO struct {
 func NewVBO(size int) (*VBO, error) {
 	var vboID uint32
 	gl.GenBuffers(1, &vboID)
+
 	vbo := &VBO{id: vboID}
 
 	vbo.Bind()
-	defer vbo.Unbind()
-
 	gl.BufferData(gl.ARRAY_BUFFER, size, gl.Ptr(nil), gl.DYNAMIC_DRAW)
+	vbo.Unbind()
 
 	return vbo, nil
 }
@@ -55,13 +49,12 @@ func NewVBO(size int) (*VBO, error) {
 // SetData .
 func (v *VBO) SetData(data VBOData) {
 	v.Bind()
-	defer v.Unbind()
-
-	gl.BufferSubData(gl.ARRAY_BUFFER, 0, data.GetVBOSize(), data.GetVBOGLPtr())
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, data.VBOSize(), data.VBOGLPtr())
+	v.Unbind()
 }
 
-// GetLayout .
-func (v *VBO) GetLayout() *VBOLayout {
+// Layout .
+func (v *VBO) Layout() *VBOLayout {
 	return v.layout
 }
 
@@ -96,8 +89,8 @@ func NewVBOLayout(elements ...VBOLayoutElement) *VBOLayout {
 	return layout
 }
 
-// GetStride .
-func (l *VBOLayout) GetStride() int32 {
+// Stride .
+func (l *VBOLayout) Stride() int32 {
 	return l.stride
 }
 
@@ -106,11 +99,4 @@ type VBOLayoutElement struct {
 	Count      int32
 	Normalized bool
 	DataType   GLDataType
-}
-
-// VBOData .
-type VBOData interface {
-	GetVBOGLPtr() unsafe.Pointer
-	GetVBOSize() int
-	GetVertexSize() int
 }
