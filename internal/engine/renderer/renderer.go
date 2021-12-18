@@ -199,7 +199,7 @@ func (r *Renderer) setDebugging() {
 		lineLen := 90
 		msgIdx := 0
 		for msgIdx < len(message) {
-			fmt.Printf("[OpenGL DEBUG]\t\t%v\n", strings.TrimLeft(message[msgIdx:min(msgIdx+lineLen, len(message))], "  "))
+			fmt.Printf("[OpenGL DEBUG]\t\t%v\n", strings.TrimLeft(message[msgIdx:min(msgIdx+lineLen, len(message))], " "))
 			msgIdx += lineLen
 		}
 		fmt.Println("[OpenGL DEBUG]")
