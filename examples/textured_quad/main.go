@@ -29,16 +29,12 @@ func main() {
 		application.EnableProfiling()
 	}
 
+	application.SetWindowSize(1024, 768)
 	if err := application.Run(); err != nil {
 		logger.Errorf("error running application: %s", err)
 		return
 	}
 }
-
-var (
-	defaultWidth  = 1024
-	defaultHeight = 768
-)
 
 // SquareTextureLayer .
 type SquareTextureLayer struct {
@@ -68,10 +64,9 @@ func (c *SquareTextureLayer) OnInit() error {
 		{Texture: texture3, Transform: mgl32.Translate3D(0, 0.5, 0.5)},
 	}
 
-	application.SetWindowSize(defaultWidth, defaultHeight)
-
-	// cameraController := renderer.NewCameraController(renderer.NewCameraPerspective(defaultWidth, defaultHeight))
-	c.cameraController = renderer.NewCameraController(renderer.NewCameraOrthographic(defaultWidth, defaultHeight))
+	w, h := application.GetWindow().GetSize()
+	// cameraController := renderer.NewCameraController(renderer.NewCameraPerspective(w, h))
+	c.cameraController = renderer.NewCameraController(renderer.NewCameraOrthographic(w, h))
 
 	return nil
 }

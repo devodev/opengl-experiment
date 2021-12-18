@@ -27,6 +27,7 @@ type Window struct {
 	height    int
 	title     string
 	resizable bool
+	vsync     bool
 
 	window *glfw.Window
 }
@@ -48,16 +49,22 @@ func New(options ...Option) (*Window, error) {
 	return window, nil
 }
 
+func (w *Window) initialized() bool {
+	return w.window != nil
+}
+
 // Init .
 func (w *Window) Init() error {
 	if err := glfw.Init(); err != nil {
 		return fmt.Errorf("error initializing GLFW: %s", err)
 	}
 
-	glfw.WindowHint(glfw.ContextVersionMajor, glfwMajorVersion)
-	glfw.WindowHint(glfw.ContextVersionMinor, glfwMinorVersion)
+	// set opengl hints on the window
 	glfw.WindowHint(glfw.OpenGLProfile, glfwOpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfwOpenGLForwardCompatible)
+	glfw.WindowHint(glfw.ContextVersionMajor, glfwMajorVersion)
+	glfw.WindowHint(glfw.ContextVersionMinor, glfwMinorVersion)
+
 	if w.resizable {
 		glfw.WindowHint(glfw.Resizable, glfw.True)
 	} else {
@@ -76,11 +83,17 @@ func (w *Window) Init() error {
 	if w.resizable {
 		w.window.SetFramebufferSizeCallback(func(window *glfw.Window, width int, height int) {
 			gl.Viewport(0, 0, int32(width), int32(height))
+			w.width = width
+			w.height = height
 		})
 	}
 
-	// sync with monitor refresh rate
-	glfw.SwapInterval(1)
+	// set vsync (synchronize buffer swap with monitor refresh rate)
+	if w.vsync {
+		glfw.SwapInterval(1)
+	} else {
+		glfw.SwapInterval(0)
+	}
 
 	return nil
 }
@@ -92,6 +105,9 @@ func (w *Window) GetSize() (int, int) {
 
 // SetSize .
 func (w *Window) SetSize(width, height int) {
+	if w.initialized() {
+		panic("cant set window size: already initialized")
+	}
 	w.width = width
 	w.height = height
 }
@@ -124,6 +140,7 @@ func (w *Window) GetCursorPos() (float64, float64) {
 // Close .
 func (w *Window) Close() error {
 	glfw.Terminate()
+	w.window = nil
 	return nil
 }
 
