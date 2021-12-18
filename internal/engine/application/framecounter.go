@@ -41,7 +41,7 @@ func (f *FrameCounter) OnUpdate(currentTime float64) {
 	if delta >= f.printDeltaSeconds {
 		fps := float64(f.nbFrames) / delta
 		frameTime := (delta * 1000) / float64(f.nbFrames)
-		fmt.Printf("%.2f fps (%.2f ms/frame)\n", fps, frameTime)
+		fmt.Printf("%.2f fps (%.4f ms/frame)\n", fps, frameTime)
 
 		f.nbFrames = 0
 		f.fpsLastTime += delta

@@ -94,7 +94,9 @@ func (a *application) run() error {
 		frameCounter.OnUpdate(glfw.GetTime())
 		deltaTime := frameCounter.Delta()
 
-		// poll window events
+		a.processInput()
+
+		// poll events (window and input)
 		glfw.PollEvents()
 
 		// update layers
@@ -110,6 +112,30 @@ func (a *application) run() error {
 		a.window.GetGLFWWindow().SwapBuffers()
 	}
 	return nil
+}
+
+func (a *application) processInput() {
+	// we lost focus, dont process synthetic events
+	if !a.window.IsFocused() {
+		return
+	}
+
+	// close window
+	if a.window.IsKeyPressed(window.KeyEscape) {
+		a.closeRequested = true
+		return
+	}
+
+	// application.GetWindow().GetGLFWWindow().SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+
+	// })
+
+	// toggle wireframes
+	if a.window.IsKeyPressed(window.KeySpace) {
+		var currentPolygonMode int32
+		gl.GetIntegerv(gl.POLYGON_MODE, &currentPolygonMode)
+		gl.PolygonMode(gl.FRONT_AND_BACK, uint32(gl.LINE+(gl.FILL-currentPolygonMode)))
+	}
 }
 
 func (a *application) shouldClose() bool {

@@ -9,8 +9,6 @@ import (
 	"github.com/devodev/opengl-experiment/internal/engine/application"
 	"github.com/devodev/opengl-experiment/internal/engine/renderer"
 	"github.com/devodev/opengl-experiment/internal/opengl"
-	"github.com/go-gl/gl/v4.6-core/gl"
-	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -73,7 +71,6 @@ func (c *SquareTextureLayer) OnInit() error {
 
 // OnUpdate .
 func (c *SquareTextureLayer) OnUpdate(deltaTime float64) {
-	c.processInput()
 	c.cameraController.OnUpdate(application.GetWindow(), deltaTime)
 }
 
@@ -84,29 +81,4 @@ func (c *SquareTextureLayer) OnRender(deltaTime float64) {
 		application.GetRenderer().DrawTexturedQuad(q)
 	}
 	application.GetRenderer().End()
-}
-
-func (c *SquareTextureLayer) processInput() {
-	glfwWindow := application.GetWindow().GetGLFWWindow()
-
-	// we lost focus, dont process synthetic events
-	if glfwWindow.GetAttrib(glfw.Focused) == glfw.False {
-		return
-	}
-
-	// close window
-	if glfwWindow.GetKey(glfw.KeyEscape) != glfw.Release {
-		application.Close()
-		return
-	}
-	// toggle wireframes
-	if glfwWindow.GetKey(glfw.KeySpace) == glfw.Press {
-		var currentPolygonMode int32
-		gl.GetIntegerv(gl.POLYGON_MODE, &currentPolygonMode)
-		if currentPolygonMode == gl.LINE {
-			gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
-		} else {
-			gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-		}
-	}
 }

@@ -74,6 +74,7 @@ func (w *Window) Init() error {
 	// create a window
 	window, err := glfw.CreateWindow(w.width, w.height, w.title, nil, nil)
 	if err != nil {
+		w.Close()
 		return fmt.Errorf("error creating window: %s", err)
 	}
 	w.window = window
@@ -125,6 +126,11 @@ func (w *Window) IsFocused() bool {
 // IsKeyPressed .
 func (w *Window) IsKeyPressed(key Key) bool {
 	return w.window.GetKey(glfw.Key(key)) == glfw.Press
+}
+
+// IsKeyReleased .
+func (w *Window) IsKeyReleased(key Key) bool {
+	return w.window.GetKey(glfw.Key(key)) == glfw.Release
 }
 
 // IsMouseButtonPressed .
