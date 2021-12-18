@@ -18,6 +18,10 @@ func main() {
 	layer := &SquareTextureLayer{}
 	application.AddLayer(layer)
 
+	if os.Getenv("PPROF") == "true" {
+		application.EnableProfiling()
+	}
+
 	if err := application.Run(); err != nil {
 		logger.Errorf("error running application: %s", err)
 		return
