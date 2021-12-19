@@ -52,7 +52,8 @@ type application struct {
 
 	window   *window.Window
 	renderer *renderer.Renderer
-	logger   *engine.SimpleLogger
+	// imguiCtx *imgui.Context
+	logger *engine.SimpleLogger
 
 	layers []Layer
 }
@@ -67,6 +68,10 @@ func (a *application) init() error {
 		return fmt.Errorf("error initializing renderer: %v", err)
 	}
 	app.logger.Printf("OpenGL version: %s", gl.GoStr(gl.GetString(gl.VERSION)))
+
+	// a.imguiCtx = imgui.CreateContext(nil)
+	// a.imguiCtx.SetCurrent()
+
 	return nil
 }
 
@@ -109,6 +114,16 @@ func (a *application) run() error {
 		for _, layer := range a.layers {
 			layer.OnRender(deltaTime)
 		}
+
+		// render imgui
+		//
+		// imgui.NewFrame()
+		// imgui.Render()
+		// drawDta := imgui.RenderedDrawData()
+		// for _, cmd := range drawDta.CommandLists() {
+		// 	// TODO: https://github.com/inkyblackness/imgui-go-examples/blob/main/internal/renderers/OpenGL3.go
+		// }
+
 		a.window.GetGLFWWindow().SwapBuffers()
 	}
 	return nil

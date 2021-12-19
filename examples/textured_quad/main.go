@@ -76,9 +76,9 @@ func (c *SquareTextureLayer) OnUpdate(deltaTime float64) {
 
 // OnRender .
 func (c *SquareTextureLayer) OnRender(deltaTime float64) {
-	application.GetRenderer().Begin(c.cameraController)
+	application.GetRenderer().BeginQuad(c.cameraController)
 	for _, q := range c.quads {
 		application.GetRenderer().DrawTexturedQuad(q)
 	}
-	application.GetRenderer().End()
+	application.GetRenderer().EndQuad()
 }

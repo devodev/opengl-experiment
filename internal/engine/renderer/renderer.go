@@ -9,39 +9,10 @@ import (
 
 	"github.com/devodev/opengl-experiment/internal/opengl"
 	"github.com/go-gl/gl/v4.6-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 var (
 	defaultBackgroundColor = color.RGBA{51, 75, 75, 1}
-)
-
-var (
-	maxQuads    = 10000
-	maxVertices = maxQuads * 4
-	maxIndices  = maxQuads * 6
-
-	maxTextures = 32
-
-	quadVertexSize = int(unsafe.Sizeof(QuadVertex{}))
-
-	quadVertices = []mgl32.Vec4{
-		{-0.5, 0.5, 0.0, 1.0},
-		{-0.5, -0.5, 0.0, 1.0},
-		{0.5, -0.5, 0.0, 1.0},
-		{0.5, 0.5, 0.0, 1.0},
-	}
-	quadTexCoords = []mgl32.Vec2{
-		{0, 1},
-		{0, 0},
-		{1, 0},
-		{1, 1},
-	}
-	quadLayout = opengl.NewVBOLayout(
-		opengl.VBOLayoutElement{Count: 4, Normalized: false, DataType: opengl.GLDataTypeFloat},
-		opengl.VBOLayoutElement{Count: 2, Normalized: false, DataType: opengl.GLDataTypeFloat},
-		opengl.VBOLayoutElement{Count: 1, Normalized: false, DataType: opengl.GLDataTypeFloat},
-	)
 )
 
 func min(a, b int) int {
@@ -55,19 +26,14 @@ func min(a, b int) int {
 type Renderer struct {
 	bgColor color.RGBA
 
-	// quad-related rendering primitives
-	quadVertexArray   *opengl.VAO
-	quadVertexBuffer  *opengl.VBO
-	quadShaderProgram *opengl.ShaderProgram
-	// quad-related batch rendering data
-	quadData *QuadData
+	quadProgram *Quad
 }
 
 // New .
 func New() (*Renderer, error) {
 	r := &Renderer{
-		bgColor:  defaultBackgroundColor,
-		quadData: NewQuadData(),
+		bgColor:     defaultBackgroundColor,
+		quadProgram: &Quad{},
 	}
 	return r, nil
 }
@@ -87,39 +53,9 @@ func (r *Renderer) Init() error {
 	r.enableBlending()
 
 	// initialize quad-related rendering primitives
-	quadVertexShaderSource := string(append([]byte(quadVertexShader), byte('\x00')))
-	quadFragmentShaderSource := string(append([]byte(quadFragmentShader), byte('\x00')))
-	shaderProgram, err := opengl.NewShaderProgram(quadVertexShaderSource, quadFragmentShaderSource)
-	if err != nil {
+	if err := r.quadProgram.Init(); err != nil {
 		return err
 	}
-
-	// create VBO
-	vbo, err := opengl.NewVBO(maxVertices * quadVertexSize)
-	if err != nil {
-		return err
-	}
-	vbo.SetLayout(quadLayout)
-
-	// create IBO
-	ibo := opengl.NewIBO(maxIndices)
-
-	// create VAO and set buffers on it
-	vao := opengl.NewVAO()
-	vao.AddVBO(vbo)
-	vao.SetIBO(ibo)
-
-	//
-	samplers := make([]int32, maxTextures)
-	for i := 0; i < maxTextures; i++ {
-		samplers[i] = int32(i)
-	}
-
-	shaderProgram.SetUniform1iv("tex", int32(len(samplers)), &samplers[0])
-
-	r.quadVertexArray = vao
-	r.quadVertexBuffer = vbo
-	r.quadShaderProgram = shaderProgram
 
 	return nil
 }
@@ -136,48 +72,20 @@ func (r *Renderer) Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-// Begin .
-func (r *Renderer) Begin(cameraController *CameraController) {
-	// reset data each frame
-	r.quadData = NewQuadData()
-
-	// set view-projection matrix
-	r.quadShaderProgram.Bind()
+// BeginQuad .
+func (r *Renderer) BeginQuad(cameraController *CameraController) {
 	vp := cameraController.GetViewProjectionMatrix()
-	r.quadShaderProgram.SetUniformMatrix4fv("vp", 1, false, &vp[0])
-	r.quadShaderProgram.Unbind()
+	r.quadProgram.Begin(vp)
 }
 
-// End .
-func (r *Renderer) End() {
-	// fmt.Printf("> End\n")
-	// fmt.Printf("\tVertices: %v\n", r.quadData.Vertices)
-	// fmt.Printf("\tIndices: %v\n", r.quadData.Indices)
-	// fmt.Printf("\tTextures: %v\n", r.quadData.Textures)
-	r.quadVertexBuffer.SetData(r.quadData)
-	r.quadVertexArray.IBO().SetData(r.quadData)
-
-	for _, t := range r.quadData.Textures {
-		t.Bind()
-	}
-	r.quadShaderProgram.Bind()
-	r.quadVertexArray.Bind()
-
-	// actual draw call
-	count := r.quadVertexArray.IBO().Count()
-	gl.DrawElements(gl.TRIANGLES, int32(count), gl.UNSIGNED_INT, nil)
-
-	for _, t := range r.quadData.Textures {
-		t.Unbind()
-	}
-	r.quadVertexArray.Unbind()
-	r.quadShaderProgram.Unbind()
-	// fmt.Printf("< End\n")
+// EndQuad .
+func (r *Renderer) EndQuad() {
+	r.quadProgram.End()
 }
 
 // DrawTexturedQuad .
 func (r *Renderer) DrawTexturedQuad(quad *TexturedQuad) {
-	if err := r.quadData.AddTexturedQuad(quad); err != nil {
+	if err := r.quadProgram.AddTextured(quad); err != nil {
 		panic(err)
 	}
 }
@@ -212,85 +120,4 @@ func (r *Renderer) enableDebugging() {
 func (r *Renderer) enableBlending() {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-}
-
-// QuadVertex .
-type QuadVertex struct {
-	Position mgl32.Vec4
-	TexCoord mgl32.Vec2
-	TexIndex float32
-}
-
-// QuadData .
-type QuadData struct {
-	Textures map[int]opengl.Texture
-	Vertices []QuadVertex
-	Indices  []uint32
-}
-
-func NewQuadData() *QuadData {
-	return &QuadData{
-		Textures: make(map[int]opengl.Texture),
-		Vertices: make([]QuadVertex, 0, maxVertices),
-		Indices:  make([]uint32, 0, maxIndices),
-	}
-}
-
-// AddTexturedQuad .
-func (d *QuadData) AddTexturedQuad(quad *TexturedQuad) error {
-	if err := d.addTexture(quad.Texture); err != nil {
-		return err
-	}
-
-	// add indices
-	quadOffset := len(d.Vertices)
-	d.Indices = append(d.Indices,
-		uint32(quadOffset),
-		uint32(quadOffset+1),
-		uint32(quadOffset+2),
-		uint32(quadOffset+2),
-		uint32(quadOffset+3),
-		uint32(quadOffset+0),
-	)
-
-	// add vertices
-	for i := 0; i < len(quadVertices); i++ {
-		vertex := QuadVertex{
-			Position: quad.Transform.Mul4x1(quadVertices[i]),
-			TexCoord: quadTexCoords[i],
-			TexIndex: float32(quad.Texture.Index()),
-		}
-		d.Vertices = append(d.Vertices, vertex)
-	}
-
-	return nil
-}
-
-func (d *QuadData) addTexture(texture opengl.Texture) error {
-	// noop if already registered
-	if _, ok := d.Textures[texture.Index()]; ok {
-		return nil
-	}
-	d.Textures[texture.Index()] = texture
-	return nil
-}
-
-// VBOGLPtr .
-func (d *QuadData) VBOGLPtr() unsafe.Pointer {
-	return gl.Ptr(d.Vertices)
-}
-
-// VBOSize .
-func (d *QuadData) VBOSize() int {
-	return quadVertexSize * len(d.Vertices)
-}
-
-// IBOGLPtr .
-func (d *QuadData) IBOGLPtr() unsafe.Pointer {
-	return gl.Ptr(d.Indices)
-}
-
-// IBOCount .
-func (d *QuadData) IBOCount() int32 {
-	return int32(len(d.Indices))
 }
