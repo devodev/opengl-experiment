@@ -1,9 +1,21 @@
 package window
 
-import "github.com/go-gl/glfw/v3.3/glfw"
+import (
+	"github.com/go-gl/glfw/v3.3/glfw"
+)
 
 // Key represents a keyboard key.
 type Key int
+
+// KeyState represents the state a key can be in.
+type KeyAction int
+
+// glfw Key state mapping
+const (
+	KeyActionPress   = KeyAction(glfw.Press)
+	KeyActionRelease = KeyAction(glfw.Release)
+	KeyActionRepeat  = KeyAction(glfw.Repeat)
+)
 
 // glfw Key mapping
 const (

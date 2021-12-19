@@ -2,6 +2,7 @@ package window
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -27,7 +28,9 @@ type Window struct {
 	height    int
 	title     string
 	resizable bool
-	vsync     bool
+
+	keyPressed  map[Key]bool
+	keyReleased map[Key]bool
 
 	window *glfw.Window
 }
@@ -35,10 +38,12 @@ type Window struct {
 // New .
 func New(options ...Option) (*Window, error) {
 	window := &Window{
-		width:     defaultWindowWidth,
-		height:    defaultWindowHeight,
-		title:     defaultWindowTitle,
-		resizable: defaultWindowResizable,
+		width:       defaultWindowWidth,
+		height:      defaultWindowHeight,
+		title:       defaultWindowTitle,
+		resizable:   defaultWindowResizable,
+		keyPressed:  make(map[Key]bool),
+		keyReleased: make(map[Key]bool),
 	}
 
 	for _, opt := range options {
@@ -80,6 +85,22 @@ func (w *Window) Init() error {
 	w.window = window
 	w.window.MakeContextCurrent()
 
+	w.window.SetKeyCallback(func(ww *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+		mKey := Key(key)
+		switch action {
+		case glfw.Press:
+			delete(w.keyReleased, mKey)
+			if _, ok := w.keyPressed[mKey]; !ok {
+				w.keyPressed[mKey] = false
+			}
+		case glfw.Release:
+			delete(w.keyPressed, mKey)
+			if _, ok := w.keyReleased[mKey]; !ok {
+				w.keyReleased[mKey] = false
+			}
+		}
+	})
+
 	// set window resize callback
 	if w.resizable {
 		w.window.SetFramebufferSizeCallback(func(window *glfw.Window, width int, height int) {
@@ -90,7 +111,7 @@ func (w *Window) Init() error {
 	}
 
 	// set vsync (synchronize buffer swap with monitor refresh rate)
-	if w.vsync {
+	if os.Getenv("VSYNC") == "true" {
 		glfw.SwapInterval(1)
 	} else {
 		glfw.SwapInterval(0)
@@ -123,14 +144,34 @@ func (w *Window) IsFocused() bool {
 	return w.window.GetAttrib(glfw.Focused) == glfw.True
 }
 
+func (w *Window) GetKeyDown(key Key) bool {
+	requested, ok := w.keyPressed[key]
+	if ok && !requested {
+		w.keyPressed[key] = true
+		return true
+	}
+	return false
+}
+
+func (w *Window) GetKeyUp(key Key) bool {
+	requested, ok := w.keyReleased[key]
+	if ok && !requested {
+		w.keyReleased[key] = true
+		return true
+	}
+	return false
+}
+
 // IsKeyPressed .
 func (w *Window) IsKeyPressed(key Key) bool {
-	return w.window.GetKey(glfw.Key(key)) == glfw.Press
+	_, ok := w.keyPressed[key]
+	return ok
 }
 
 // IsKeyReleased .
 func (w *Window) IsKeyReleased(key Key) bool {
-	return w.window.GetKey(glfw.Key(key)) == glfw.Release
+	_, ok := w.keyReleased[key]
+	return ok
 }
 
 // IsMouseButtonPressed .

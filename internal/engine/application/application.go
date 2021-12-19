@@ -126,12 +126,8 @@ func (a *application) processInput() {
 		return
 	}
 
-	// application.GetWindow().GetGLFWWindow().SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-
-	// })
-
 	// toggle wireframes
-	if a.window.IsKeyPressed(window.KeySpace) {
+	if a.window.GetKeyDown(window.KeySpace) {
 		var currentPolygonMode int32
 		gl.GetIntegerv(gl.POLYGON_MODE, &currentPolygonMode)
 		gl.PolygonMode(gl.FRONT_AND_BACK, uint32(gl.LINE+(gl.FILL-currentPolygonMode)))
