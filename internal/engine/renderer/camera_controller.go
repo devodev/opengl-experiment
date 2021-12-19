@@ -83,25 +83,19 @@ func (c *CameraController) OnUpdate(w *window.Window, deltaTime float64) {
 		c.moveRight(speed)
 	}
 	// rotation
-	windowWidth, windowHeight := w.GetSize()
-	cursorX, cursorY := w.GetCursorPos()
 	if w.IsMouseButtonPressed(window.MouseButton1) {
-		if cursorX >= 0 &&
-			cursorY >= 0 &&
-			cursorX <= float64(windowWidth) &&
-			cursorY <= float64(windowHeight) {
-			if !c.mouseButton1IsPressed {
-				c.mouseButton1IsPressed = true
-				c.mousePosX = cursorX
-				c.mousePosY = cursorY
-			}
-			c.rotate(speed, cursorX, cursorY)
+		cursorX, cursorY := w.GetCursorPos()
+		if !c.mouseButton1IsPressed {
+			c.mouseButton1IsPressed = true
+			c.mousePosX = cursorX
+			c.mousePosY = cursorY
 		}
+		c.rotate(speed, cursorX, cursorY)
 	} else {
 		c.mouseButton1IsPressed = false
 	}
 
-	c.camera.Resize(windowWidth, windowHeight)
+	c.camera.Resize(w.GetSize())
 	c.recalculateViewMatrix()
 }
 

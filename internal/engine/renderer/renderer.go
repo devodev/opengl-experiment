@@ -244,15 +244,14 @@ func (d *QuadData) AddTexturedQuad(quad *TexturedQuad) error {
 
 	// add indices
 	quadOffset := len(d.Vertices)
-	indices := []uint32{
+	d.Indices = append(d.Indices,
 		uint32(quadOffset),
-		uint32(quadOffset + 1),
-		uint32(quadOffset + 2),
-		uint32(quadOffset + 2),
-		uint32(quadOffset + 3),
-		uint32(quadOffset + 0),
-	}
-	d.Indices = append(d.Indices, indices...)
+		uint32(quadOffset+1),
+		uint32(quadOffset+2),
+		uint32(quadOffset+2),
+		uint32(quadOffset+3),
+		uint32(quadOffset+0),
+	)
 
 	// add vertices
 	for i := 0; i < len(quadVertices); i++ {
